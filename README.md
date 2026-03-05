@@ -10,6 +10,7 @@
 
 A production-ready Spring Boot backend for a modern e-commerce platform. It provides scalable RESTful APIs for product management, shopping cart operations, transaction processing, and secure user authentication.
 
+🔴 Live Demo: [https://johnmak.store](https://johnmak.store)
 ## Key Features
 
 - **Product Catalog & Inventory**: Advanced filtering, pagination, promotions engine, and real-time stock deduction.
