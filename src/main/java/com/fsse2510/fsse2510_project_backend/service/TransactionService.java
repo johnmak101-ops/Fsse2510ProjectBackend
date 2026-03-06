@@ -25,14 +25,14 @@ public interface TransactionService {
 
         TransactionResponseData updateStatusToProcessing(FirebaseUserData user, Integer tid);
 
-        TransactionResponseData finishTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId,
-                        Long amount, String currency);
+        void finishTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId,
+                                                Long amount, String currency);
 
-        TransactionResponseData finishTransactionFromStripeCheckout(String firebaseUid, Integer tid, String intentId);
+        void finishTransactionFromStripeCheckout(String firebaseUid, Integer tid, String intentId);
 
-        TransactionResponseData failTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId);
+        void failTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId);
 
-        TransactionResponseData abortTransactionFromStripeWebhook(String firebaseUid, Integer tid);
+        void abortTransactionFromStripeWebhook(String firebaseUid, Integer tid);
 
         List<TransactionResponseData> getAllTransactions();
 

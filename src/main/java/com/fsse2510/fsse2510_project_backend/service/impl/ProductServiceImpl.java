@@ -53,6 +53,15 @@ public class ProductServiceImpl implements ProductService {
     private final ProductPromotionEnricherService productPromotionEnricherService;
     private final ProductSpecificationBuilder specificationBuilder;
 
+
+    // Slice: For infinite scroll function in frontend
+    // @Transaction(readOnly = true), skip dirty check and read only
+    // Pageable, not to return all 6xx products
+    // Find pid first, then get shallow data(filter required data)
+    // Add promotion info
+    // return content and boolean hasNext to frontend
+    // Cache have no meaning in this case
+    // See Generics in Java (Udemy)
     @Override
     @Transactional(readOnly = true)
     public SliceResponseDto<ProductSummaryData> getAllProducts(int page, int size) {
@@ -63,6 +72,8 @@ public class ProductServiceImpl implements ProductService {
         return SliceResponseDto.of(content, pidSlice.hasNext());
     }
 
+    // @Cacheable(value = CACHE_PRODUCT, key = "#pid", sync = true) Lock DB, Prevent Cache Stampede
+    // Sac
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = CACHE_PRODUCT, key = "#pid", sync = true)
@@ -172,8 +183,11 @@ public class ProductServiceImpl implements ProductService {
                 .toList();
     }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-
+    // Helpers
+    // Use map to fix order, {3, 1, 2} will not become {1, 2, 3}
+    // Re-ordering by Application Layer
+    // **** SQL IN may be Unordered ****
+    // return the result as Frontend expected on filter/ sorting
     @Transactional(readOnly = true)
     protected List<ProductEntity> fetchProductsByIdsShallow(List<Integer> pids) {
         if (pids.isEmpty())

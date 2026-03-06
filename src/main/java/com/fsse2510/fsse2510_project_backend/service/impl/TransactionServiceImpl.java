@@ -198,62 +198,66 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     @Transactional
-    public TransactionResponseData finishTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId,
-            Long amount, String currency) {
+    public void finishTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId,
+                                                   Long amount, String currency) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
-            return transactionDataMapper.toData(transaction);
+            transactionDataMapper.toData(transaction);
+            return;
         }
         if (transaction.getStripePaymentIntentId() == null
                 || !transaction.getStripePaymentIntentId().equals(intentId)) {
             throw new PaymentVerificationException("Payment Intent Mismatch");
         }
-        return finishTransaction(new FirebaseUserData(firebaseUid, null), tid, null);
+        finishTransaction(new FirebaseUserData(firebaseUid, null), tid, null);
     }
 
     @Override
     @Transactional
-    public TransactionResponseData finishTransactionFromStripeCheckout(String firebaseUid, Integer tid,
-            String intentId) {
+    public void finishTransactionFromStripeCheckout(String firebaseUid, Integer tid,
+                                                    String intentId) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
-            return transactionDataMapper.toData(transaction);
+            transactionDataMapper.toData(transaction);
+            return;
         }
         transaction.setStripePaymentIntentId(intentId);
         transactionRepository.save(transaction);
-        return finishTransaction(new FirebaseUserData(firebaseUid, null), tid, null);
+        finishTransaction(new FirebaseUserData(firebaseUid, null), tid, null);
     }
 
     @Override
     @Transactional
-    public TransactionResponseData failTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId) {
+    public void failTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
-            return transactionDataMapper.toData(transaction);
+            transactionDataMapper.toData(transaction);
+            return;
         }
         if (transaction.getStripePaymentIntentId() == null
                 || !transaction.getStripePaymentIntentId().equals(intentId)) {
             throw new PaymentVerificationException("Payment Intent Mismatch");
         }
         transaction.setStatus(PaymentStatus.FAILED);
-        return saveAndRecover(transaction);
+        saveAndRecover(transaction);
     }
 
     @Override
     @Transactional
-    public TransactionResponseData abortTransactionFromStripeWebhook(String firebaseUid, Integer tid) {
+    public void abortTransactionFromStripeWebhook(String firebaseUid, Integer tid) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
 
         if (transaction.getStatus() == PaymentStatus.SUCCESS
                 || transaction.getStatus() == PaymentStatus.ABORTED) {
             logger.info("[Webhook] Transaction {} already in final state: {}, skipping abort",
                     tid, transaction.getStatus());
-            return transactionDataMapper.toData(transaction);
+            transactionDataMapper.toData(transaction);
+            return;
         }
 
         logger.info("[Webhook] Aborting transaction {} due to payment_intent.canceled (user abandoned)", tid);
         transaction.setStatus(PaymentStatus.ABORTED);
-        return saveAndRecover(transaction);
+        saveAndRecover(transaction);
     }
 
     @Override
