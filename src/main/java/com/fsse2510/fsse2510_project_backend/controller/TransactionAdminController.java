@@ -4,6 +4,7 @@ import com.fsse2510.fsse2510_project_backend.data.transaction.dto.response.Trans
 import com.fsse2510.fsse2510_project_backend.mapper.transaction.TransactionDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.TransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.List;
 @RequestMapping("/admin/transactions")
 @RequiredArgsConstructor
 @Validated
+@PreAuthorize("hasRole('ADMIN')")
 public class TransactionAdminController {
 
     private final TransactionService transactionService;
