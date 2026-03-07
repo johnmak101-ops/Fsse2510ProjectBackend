@@ -1,6 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.data.user.dto.response;
 
 import com.fsse2510.fsse2510_project_backend.data.membership.dto.response.MembershipResponseDto;
+import com.fsse2510.fsse2510_project_backend.data.user.UserRole;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -11,6 +12,12 @@ public class UserResponseDto {
     private Integer uid;
     private String email;
     private String firebaseUid;
+
+    /**
+     * The resolved application role for this user. Maps to 'ADMIN' or 'USER' in the
+     * frontend.
+     */
+    private UserRole role;
 
     // --- Membership Info ---
     private MembershipResponseDto membership; // 內嵌 Membership DTO

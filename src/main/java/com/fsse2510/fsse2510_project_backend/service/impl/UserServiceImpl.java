@@ -1,6 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.service.impl;
 
 import com.fsse2510.fsse2510_project_backend.data.membership.entity.MembershipConfigEntity;
+import com.fsse2510.fsse2510_project_backend.data.user.UserRole;
 import com.fsse2510.fsse2510_project_backend.data.user.domainObject.request.FirebaseUserData;
 import com.fsse2510.fsse2510_project_backend.data.user.domainObject.request.UpdateUserProfileRequestData;
 import com.fsse2510.fsse2510_project_backend.data.user.domainObject.response.UserData;
@@ -14,10 +15,13 @@ import com.fsse2510.fsse2510_project_backend.service.MembershipService;
 import com.fsse2510.fsse2510_project_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -31,11 +35,19 @@ public class UserServiceImpl implements UserService {
     private final MembershipService membershipService;
     private final MembershipDataMapper membershipDataMapper;
 
+    @Value("${app.admin.emails:admin@user.com}")
+    private String adminEmails;
+
     private UserData entityToDomain(UserEntity userEntity) {
         if (userEntity == null)
             return null;
 
         UserData data = userDataMapper.toDomain(userEntity);
+
+        // Resolve role: check if user's email is in the admin list
+        List<String> adminList = Arrays.asList(adminEmails.split(","));
+        boolean isAdmin = userEntity.getEmail() != null && adminList.contains(userEntity.getEmail().trim());
+        data.setRole(isAdmin ? UserRole.ADMIN : UserRole.USER);
 
         try {
             if (userEntity.getLevel() != null) {

@@ -3,6 +3,7 @@ package com.fsse2510.fsse2510_project_backend.data.user.domainObject.response;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fsse2510.fsse2510_project_backend.data.membership.domainObject.response.MembershipResponseData;
+import com.fsse2510.fsse2510_project_backend.data.user.UserRole;
 import com.fsse2510.fsse2510_project_backend.util.ValidationUtil;
 import lombok.*;
 
@@ -23,6 +24,9 @@ public class UserData implements Serializable {
     private Integer uid;
     private String email;
     private String firebaseUid;
+
+    /** The resolved application role for this user (ADMIN or USER). */
+    private UserRole role;
 
     // Membership Info
     private MembershipResponseData membership; // Membership Data Object

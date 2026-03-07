@@ -16,6 +16,7 @@ public interface UserDataMapper {
     void updateEntity(UpdateUserProfileRequestData data, @MappingTarget UserEntity entity);
 
     @Mapping(target = "membership", ignore = true)
+    @Mapping(target = "role", ignore = true)
     UserData toDomain(UserEntity entity);
 
     @Mapping(target = "uid", ignore = true)
