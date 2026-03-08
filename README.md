@@ -20,19 +20,19 @@ A Spring Boot backend for a modern e-commerce platform. It provides RESTful APIs
 
 ## Key Features & Business Logic
 
-- ** Product Catalog & Inventory**
+- **Product Catalog & Inventory**
   - Product browsing with pagination, categorical navigation, and dynamic filtering.
   - Real-time inventory tracking and race-condition prevention during checkout.
-- ** Shopping Cart & Secure Checkout**
+- **Shopping Cart & Secure Checkout**
   - Seamless lifecycle management from cart manipulation to order completion.
   - Integration with **Stripe API** and **Stripe Webhooks** for payment state consistency.
-- ** Promotions & Loyalty Programs**
+- **Promotions & Loyalty Programs**
   - Admin-controlled **Coupon & Promotion Engine** supporting dynamic discount strategies.
   - **Membership Tiers System** providing loyalty benefits and specialized routing.
-- ** Personalization & Aesthetics**
+- **Personalization & Aesthetics**
   - **Wishlist** functionality for users to save and track favorite products.
   - Dynamic **Showcase Banners** controlled by admin for marketing campaigns.
-- ** Security (RBAC)**
+- **Security (RBAC)**
   - Stateless architecture using **Firebase Auth (Google Secure Token)** for JWT signature validation.
   - **Role-Based Access Control (RBAC)** segregating Public, Authenticated User, and Admin APIs.
 
