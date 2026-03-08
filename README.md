@@ -1,36 +1,80 @@
-# FSSE2510 Project Backend
+# FSSE2510 Project Backend - E-Commerce API
 
-![Java](https://img.shields.io/badge/Java-21-orange.svg?style=for-the-badge&logo=openjdk)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.5.8-brightgreen.svg?style=for-the-badge&logo=springboot)
-![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg?style=for-the-badge&logo=mysql)
-![Redis](https://img.shields.io/badge/Redis-Caching-red.svg?style=for-the-badge&logo=redis)
-![Stripe](https://img.shields.io/badge/Stripe-Payments-blueviolet.svg?style=for-the-badge&logo=stripe)
-![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED.svg?style=for-the-badge&logo=docker)
-![AWS Lightsail](https://img.shields.io/badge/AWS_Lightsail-Deployment-FF9900.svg?style=for-the-badge&logo=amazonaws)
+<div align="center">
+  <img src="https://img.shields.io/badge/Java_21-orange?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21" />
+  <img src="https://img.shields.io/badge/Spring_Boot-3.5.8-brightgreen?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/MySQL-8.0-blue?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
+  <img src="https://img.shields.io/badge/Redis-Caching-red?style=for-the-badge&logo=redis&logoColor=white" alt="Redis" />
+  <img src="https://img.shields.io/badge/Stripe-Payments-blueviolet?style=for-the-badge&logo=stripe&logoColor=white" alt="Stripe" />
+  <img src="https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+  <img src="https://img.shields.io/badge/AWS_Lightsail-Deployed-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="AWS" />
+</div>
 
-A production-ready Spring Boot backend for a modern e-commerce platform. It provides scalable RESTful APIs for product management, shopping cart operations, transaction processing, and secure user authentication.
+<br />
 
-🔴 Live Demo: [https://johnmak.store](https://johnmak.store)
-## Key Features
+A Spring Boot backend for a modern e-commerce platform. It provides RESTful APIs for product management, shopping cart operations, transaction processing, and role-based user authentication.
 
-- **Product Catalog & Inventory**: Advanced filtering, pagination, promotions engine, and real-time stock deduction.
-- **Shopping Cart & Checkout**: Complete transaction lifecycle management with secure Stripe API integration.
-- **Authentication & Authorization**: Stateless JWT-based security leveraging Firebase (Google Secure Token) and custom role-based access control.
-- **High Performance**: Redis caching for frequently accessed data and optimized JPA/Hibernate query patterns (avoiding N+1).
-- **Media Management**: Direct integration with AWS S3 for scalable product image storage.
-- **Zero-Downtime Deployment**: Configured with Docker and Google Jib for seamless CI/CD to AWS Lightsail.
+🔴 **Live Demo:** [https://johnmak.store](https://johnmak.store)
 
 ---
 
-## Tech Stack
+## Key Features & Business Logic
 
-- **Core**: Java 21, Spring Boot 3.5.8
+- ** Product Catalog & Inventory**
+  - Product browsing with pagination, categorical navigation, and dynamic filtering.
+  - Real-time inventory tracking and race-condition prevention during checkout.
+- ** Shopping Cart & Secure Checkout**
+  - Seamless lifecycle management from cart manipulation to order completion.
+  - Integration with **Stripe API** and **Stripe Webhooks** for payment state consistency.
+- ** Promotions & Loyalty Programs**
+  - Admin-controlled **Coupon & Promotion Engine** supporting dynamic discount strategies.
+  - **Membership Tiers System** providing loyalty benefits and specialized routing.
+- ** Personalization & Aesthetics**
+  - **Wishlist** functionality for users to save and track favorite products.
+  - Dynamic **Showcase Banners** controlled by admin for marketing campaigns.
+- ** Security (RBAC)**
+  - Stateless architecture using **Firebase Auth (Google Secure Token)** for JWT signature validation.
+  - **Role-Based Access Control (RBAC)** segregating Public, Authenticated User, and Admin APIs.
+
+---
+
+## Tech Stack & Architecture Design
+
+### Core Technologies
+- **Language/Framework**: Java 21, Spring Boot 3.5.8    
 - **Data Persistence**: Spring Data JPA (Hibernate), MySQL 8+
-- **Caching**: Spring Data Redis
-- **Security**: Spring Security, OAuth2 Resource Server (handling Firebase JWT)
-- **Utilities**: MapStruct (DTO Mapping), Lombok
-- **External APIs**: Stripe Java SDK (v24.1.0), AWS S3
-- **DevOps**: Docker, Jib, GitHub Actions
+- **Caching Layer**: Spring Data Redis (Optimizing read-heavy operations)
+- **Security**: Spring Security, OAuth2 Resource Server
+- **Mapping & Boilerplate**: MapStruct (DTO Mapping), Lombok
+- **External Integrations**: Stripe Java SDK (v24.1.0), AWS S3 (Media Storage)
+- **DevOps**: Docker, Google Jib, GitHub Actions, AWS Lightsail
+
+### Data Flow
+
+To ensure high maintainability and separation of concerns, the system strictly adheres to layered architecture:
+
+```mermaid
+graph TD;
+    Client[Client Browser / Mobile] -->|HTTPS Request| Sec[Spring Security Filter Chain];
+    Sec -.->|JWT Validation| Ctrl[REST Controller];
+    Ctrl -->|DTO Handling| Service[Business Service Layer];
+    Service -->|Entities| Repo[JPA Repository / DAO];
+    Repo <--> DB[(MySQL 8.0)];
+    Service <--> Cache[(Redis Cache)];
+    Service <--> API[External APIs: Stripe / AWS S3];
+    
+    %% Styling
+    classDef auth fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef core fill:#bbf,stroke:#333,stroke-width:2px;
+    class Sec auth;
+    class Ctrl,Service,Repo core;
+```
+
+### Technical Highlights
+
+- **Two-Step Fetch Pattern & N+1 Prevention**: JPA Repositories utilize a custom optimized query pattern—fetching a `Slice<Integer>` of IDs first, followed by a shallow fetch. This effectively neutralizes N+1 problem and excessive `JOIN` memory bloat during pagination.
+- **Defensive Boundary Control**: Strict DTO patterns using MapStruct. Business `Entity` objects are never exposed to the Presentation layer, preventing mass-assignment vulnerabilities.
+- **Global Exception Handling**: A centralized `@ControllerAdvice` intercepts all exceptions to return sanitized, standardized, API-friendly error responses.
 
 ---
 
@@ -38,59 +82,18 @@ A production-ready Spring Boot backend for a modern e-commerce platform. It prov
 
 ### 1. Environment Setup
 
-Copy your local configuration file and fill in your secrets.
-Configure your environment variables using `.env.example`.
-
-### 2. Run Server
-
-The application is built using Gradle.
-The server will start on port `8080`.
-
----
-
-## Architecture & Data Flow
-
-### Request Lifecycle & Data Flow
-
-To ensure separation of concerns, the application strictly adheres to an N-Tier architecture:
-
-```mermaid
-graph TD;
-    Client[Client Browser / Mobile] -->|HTTPS Request| Sec[Spring Security Filter Chain];
-    Sec -->|JWT Validation| Ctrl[REST Controller];
-    Controller -->|DTO Handling| Service[Business Service Layer];
-    Service -->|Entities| Repo[JPA Repository / DAO];
-    Repo <--> DB[(MySQL Database)];
-    Service <--> Cache[(Redis Cache)];
-    Service <--> API[External APIs: Stripe / S3];
-    
-    %% Styling
-    classDef layer fill:#f9f,stroke:#333,stroke-width:2px;
-    class Ctrl,Service,Repo layer;
+Copy your local configuration file and inject your secrets.
+```bash
+cp .env.example .env
 ```
+Ensure all required backing services (MySQL, Redis) are running.
 
-### Directory Structure
+### 2. Build and Run Server
 
-```text
-src/
-└── main/
-    ├── java/com/fsse2510/fsse2510_project_backend/
-    │   ├── api/          # REST Controllers (Endpoints exposed to Frontend)
-    │   ├── config/       # Configurations (Security, Redis, Stripe, CORS)
-    │   ├── data/         # Models: Entities (DB), DTOs (API), Mappers (MapStruct)
-    │   ├── exception/    # Custom Exceptions & Global @ExceptionHandler
-    │   ├── repository/   # Spring Data JPA Interfaces
-    │   └── service/      # Complex Business Logic & Implementations
-    └── resources/
-        ├── application.properties      # Base configuration
-        ├── application-dev.properties  # Development profile configuration
-        ├── application-prod.properties # Production profile configuration
-        └── logback-spring.xml          # Logging configuration
+The application uses Gradle wrapper. Start the server (runs on port `8080` by default):
+```bash
+./gradlew bootRun
 ```
-
-### Technical Highlights
-- **Pagination & Query Optimization**: Repositories utilize a *two-step fetch pattern* fetching `Slice<Integer>` ID arrays first, followed by a shallow fetch to prevent Hibernate excessive JOINs and N+1 memory issues.
-- **Defensive Data Handling**: Services never expose internal `Entity` objects to the Controllers. MapStruct acts as a strict boundary, transforming Entities to Response DTOs.
 
 ---
 
@@ -98,44 +101,27 @@ src/
 
 When deploying or configuring your local environment, ensure the following are provided (via `.env` or CI/CD secrets):
 
-- **Database**: `DB_URL`, `DB_USER`, `DB_PASSWORD`
-- **Cache**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD`
-- **Security**: `JWT_ISSUER_URI`
-- **AWS S3**: `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`, `IMAGE_BASE_URL`
-- **Stripe**: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
-- **App Rules**: `ADMIN_EMAILS`, `APP_FRONTEND_URL`
+| Category | Variables | Description |
+|---|---|---|
+| **Database** | `DB_URL`, `DB_USER`, `DB_PASSWORD` | MySQL connection credentials. |
+| **Cache** | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis connection details. |
+| **Security** | `JWT_ISSUER_URI` | Firebase Auth URI (e.g., `https://securetoken.google.com/<project-id>`). |
+| **AWS S3** | `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`, `IMAGE_BASE_URL` | For product image uploads. |
+| **Stripe** | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payment processing secrets. |
+| **App Rules**| `ADMIN_EMAILS`, `APP_FRONTEND_URL` | RBAC admin seeding and CORS frontend URL. |
 
 ---
 
-## Testing
+## Deployment (AWS Lightsail)
 
-The project utilizes JUnit 5 with Mockito for isolated unit tests, and `@DataJpaTest` using an H2 in-memory database for repository integration tests.
+The application features a fully automated CI/CD pipeline. On every push to the `main` branch, **GitHub Actions** builds a lightweight Docker image using **Google Jib**, pushes it to DockerHub, and triggers a rolling restart on an **AWS Lightsail** instance via SSH.
 
-```bash
-# Run all tests
-./gradlew test
-
-# Run tests with dynamic agent loading (for modern Mockito/ByteBuddy in JVM 21)
-./gradlew test -Djdk.instrument.traceUsage
-```
-
----
-
-##  Deployment (AWS Lightsail)
-
-The application is containerized and deployed to an AWS Lightsail instance. 
-
-### Deployment Steps:
-
-1. Ensure Java 21 and Docker are installed
-2. Pull image from Docker
-3. Set up project folder and create `.env` file in VM
-4. Write `docker-compose.yml` file in VM
+### Example `docker-compose.yml`:
 ```yaml
 version: '3.8'
 services:
   backend:
-    image: docker.io/yourdockerhubusername/project-backend:latest
+    image: docker.io/johnmak101/project-backend:latest
     container_name: fsse-backend
     ports:
       - "8080:8080"
@@ -149,9 +135,6 @@ services:
         limits:
           memory: 1.5G
 ```
-5. Setup GitHub Actions Secrets:
-`DOCKER_ACCESS_TOKEN`, `DOCKER_USERNAME`, `LIGHTSAIL_HOST`, `LIGHTSAIL_SSH_KEY`, `LIGHTSAIL_USERNAME`
-6. Run GitHub Actions Scripts. (On push to `main`, the image is built via Jib and pushed to DockerHub, then the VM is restarted via SSH).
 
 ---
 
@@ -159,11 +142,8 @@ services:
 
 - **JWT Validation Fails (401 Unauthorized)**: Verify `JWT_ISSUER_URI` matches exactly format `https://securetoken.google.com/<project-id>`.
 - **Stripe Webhook Signature Failed**: Ensure the CLI webhook secret matches the endpoint secret in `.env`.
-- **Redis Connection Refused**: Check if your Redis Docker container is running via `docker ps`.
+- **Redis Connection Refused**: Check if your Redis Docker container is running (`docker ps`). Make sure correct port is mapped.
 
 ---
-
 ## Author
 **John Mak**
-
-
