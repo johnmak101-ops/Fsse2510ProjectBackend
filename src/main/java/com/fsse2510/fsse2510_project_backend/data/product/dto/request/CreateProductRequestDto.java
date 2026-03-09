@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -45,8 +47,8 @@ public class CreateProductRequestDto {
     private String fabricInfo;
     private String designStyling;
     private String colorDisclaimer;
-    private java.util.List<String> tags;
-    private java.util.List<ProductImageRequestDto> images;
+    private List<String> tags;
+    private List<ProductImageRequestDto> images;
 
-    private java.util.List<ProductInventoryRequestDto> inventories;
+    private List<ProductInventoryRequestDto> inventories;
 }

@@ -5,11 +5,16 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShowcaseCollectionData {
+public class ShowcaseCollectionData implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private Integer id;
     private String title;
     private String imageUrl;

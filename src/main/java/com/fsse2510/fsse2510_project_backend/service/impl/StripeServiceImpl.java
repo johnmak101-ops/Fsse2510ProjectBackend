@@ -17,6 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
+import static java.math.RoundingMode.HALF_UP;
+
 @Service
 public class StripeServiceImpl implements StripeService {
     private static final Logger logger = LoggerFactory.getLogger(StripeServiceImpl.class);
@@ -46,7 +48,7 @@ public class StripeServiceImpl implements StripeService {
                                             SessionCreateParams.LineItem.PriceData.builder()
                                                     .setCurrency(stripeCurrency)
                                                     .setUnitAmount(total.multiply(BigDecimal.valueOf(100))
-                                                            .setScale(0, java.math.RoundingMode.HALF_UP).longValue())
+                                                            .setScale(0, HALF_UP).longValue())
                                                     .setProductData(
                                                             SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                                                     .setName("Order #" + tid)

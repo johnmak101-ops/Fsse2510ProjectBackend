@@ -16,9 +16,14 @@ import com.fsse2510.fsse2510_project_backend.service.NavigationService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
+import com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity;
+import com.fsse2510.fsse2510_project_backend.data.product.entity.CollectionEntity;
 
 @Service
 @RequiredArgsConstructor
@@ -32,10 +37,12 @@ public class NavigationServiceImpl implements NavigationService {
     private final SystemConfigRepository systemConfigRepository;
     private final NavigationItemEntityMapper navigationItemEntityMapper;
 
+    private static final String CACHE_NAVIGATION = "navigation_v1";
+
     @Override
     @Transactional
+    @Cacheable(value = CACHE_NAVIGATION, key = "'public'", sync = true)
     public List<NavigationItemData> getPublicNavigation() {
-        // Use optimized query to fetch hierarchy
         List<NavigationItemEntity> roots = navigationItemRepository.findPublicNavigationRoots();
         return roots.stream()
                 .map(navigationItemEntityMapper::toData)
@@ -44,6 +51,7 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CACHE_NAVIGATION, allEntries = true)
     public NavigationItemData createItem(CreateNavigationItemRequestData createData) {
         NavigationItemEntity entity = navigationItemEntityMapper.toEntity(createData);
 
@@ -61,6 +69,7 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CACHE_NAVIGATION, allEntries = true)
     public NavigationItemData updateItem(UpdateNavigationItemRequestData updateData) {
         NavigationItemEntity entity = navigationItemRepository.findById(updateData.getId())
                 .orElseThrow(() -> new EntityNotFoundException("Navigation Item not found: " + updateData.getId()));
@@ -95,6 +104,7 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CACHE_NAVIGATION, allEntries = true)
     public void deleteItem(Integer id) {
         if (navigationItemRepository.existsById(id)) {
             navigationItemRepository.deleteById(id);
@@ -107,10 +117,10 @@ public class NavigationServiceImpl implements NavigationService {
     public NavigationOptionsData getNavigationOptions() {
         return NavigationOptionsData.builder()
                 .collections(collectionRepository.findAll().stream()
-                        .map(com.fsse2510.fsse2510_project_backend.data.product.entity.CollectionEntity::getName)
+                        .map(CollectionEntity::getName)
                         .toList())
                 .categories(categoryRepository.findAll().stream()
-                        .map(com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity::getName)
+                        .map(CategoryEntity::getName)
                         .toList())
                 .tags(productRepository.findAllDistinctTags())
                 .productTypes(productRepository.findAllDistinctProductTypes())
@@ -119,6 +129,7 @@ public class NavigationServiceImpl implements NavigationService {
 
     @Override
     @Transactional
+    @CacheEvict(value = CACHE_NAVIGATION, allEntries = true)
     public void migrateInitialData() {
         if (navigationItemRepository.count() > 0) {
             return;

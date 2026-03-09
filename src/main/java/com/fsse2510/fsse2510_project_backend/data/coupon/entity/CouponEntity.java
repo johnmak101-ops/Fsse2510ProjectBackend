@@ -2,8 +2,16 @@ package com.fsse2510.fsse2510_project_backend.data.coupon.entity;
 
 import com.fsse2510.fsse2510_project_backend.data.common.constant.DiscountType;
 import com.fsse2510.fsse2510_project_backend.data.membership.membershipLevel.MembershipLevel;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 

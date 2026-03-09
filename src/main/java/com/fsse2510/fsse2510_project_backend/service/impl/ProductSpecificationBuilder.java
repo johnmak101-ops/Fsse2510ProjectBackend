@@ -4,7 +4,10 @@ import com.fsse2510.fsse2510_project_backend.data.product.domainObject.request.P
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CollectionEntity;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 

@@ -27,6 +27,10 @@ import com.fsse2510.fsse2510_project_backend.service.PromotionProductSyncService
 import java.time.LocalDateTime;
 import java.util.List;
 
+import java.math.BigDecimal;
+import java.util.Collection;
+import static java.math.BigDecimal.ZERO;
+
 @Service
 @RequiredArgsConstructor
 public class PromotionServiceImpl implements PromotionService {
@@ -163,10 +167,10 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     private void validatePromotionRequest(LocalDateTime start, LocalDateTime end, PromotionType type,
-            DiscountType discountType, java.math.BigDecimal discountValue,
+            DiscountType discountType, BigDecimal discountValue,
             Integer buyX, Integer getY,
-            java.util.Collection<Integer> pids, java.util.Collection<String> categories,
-            java.util.Collection<String> collections, java.util.Collection<String> tags) {
+            Collection<Integer> pids, Collection<String> categories,
+            Collection<String> collections, Collection<String> tags) {
         if (start != null && end != null && start.isAfter(end)) {
             throw new PromotionValidationException("Start date must be before end date.");
         }
@@ -183,13 +187,13 @@ public class PromotionServiceImpl implements PromotionService {
                 throw new PromotionValidationException("Discount value is required.");
             }
             if (discountType == DiscountType.PERCENTAGE) {
-                if (discountValue.compareTo(java.math.BigDecimal.ZERO) <= 0 ||
-                        discountValue.compareTo(java.math.BigDecimal.valueOf(100)) > 0) {
+                if (discountValue.compareTo(ZERO) <= 0 ||
+                        discountValue.compareTo(BigDecimal.valueOf(100)) > 0) {
                     throw new PromotionValidationException(
                             "Percentage discount must be between 1 and 100.");
                 }
             } else if (discountType == DiscountType.FIXED) {
-                if (discountValue.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                if (discountValue.compareTo(ZERO) <= 0) {
                     throw new PromotionValidationException("Fixed discount must be greater than 0.");
                 }
             }
@@ -221,7 +225,7 @@ public class PromotionServiceImpl implements PromotionService {
     public List<PromotionResponseData> getActivePromotionsByType(List<PromotionType> types) {
         // Currently, fetch all matching Types; expiry check is handled by the
         // Calculator
-        return promotionRepository.findByTypeIn(types).stream()
+        return promotionRepository.findDistinctByTypeIn(types).stream()
                 .map(promotionDataMapper::toResponseData)
                 .toList();
     }

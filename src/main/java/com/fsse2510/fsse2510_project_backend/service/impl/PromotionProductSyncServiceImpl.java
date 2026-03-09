@@ -209,7 +209,7 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
     }
 
     @CacheEvict(value = { "product_v4", "product_summaries_v4", "product_recommendations_v4",
-            "product_showcase_v4" }, allEntries = true)
+            "product_showcase_v4", "product_showcase_v1" }, allEntries = true)
     public void clearProductCache() {
         logger.debug("Cleared product cache");
     }

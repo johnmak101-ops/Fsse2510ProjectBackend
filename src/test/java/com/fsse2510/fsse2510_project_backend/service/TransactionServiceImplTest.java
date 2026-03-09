@@ -25,6 +25,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity;
+import com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceImplTest {
 
@@ -50,7 +54,7 @@ class TransactionServiceImplTest {
         @Mock
         private MembershipService membershipService;
         @Mock
-        private com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository shippingAddressRepository;
+        private ShippingAddressRepository shippingAddressRepository;
 
         @InjectMocks
         private TransactionServiceImpl transactionService;
@@ -87,9 +91,9 @@ class TransactionServiceImplTest {
                 when(transactionDataMapper.toData(any()))
                                 .thenReturn(TransactionResponseData.builder().total(new BigDecimal("200.00")).build());
 
-                com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity addressEntity = new com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity();
+                ShippingAddressEntity addressEntity = new ShippingAddressEntity();
                 addressEntity.setUser(userEntity);
-                when(shippingAddressRepository.findById(1)).thenReturn(java.util.Optional.of(addressEntity));
+                when(shippingAddressRepository.findById(1)).thenReturn(Optional.of(addressEntity));
 
                 // --- Execute ---
                 CreateTransactionRequestData request = CreateTransactionRequestData.builder()

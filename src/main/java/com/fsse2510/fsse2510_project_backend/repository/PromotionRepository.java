@@ -13,17 +13,19 @@ import java.util.List;
 
 public interface PromotionRepository extends JpaRepository<PromotionEntity, Integer> {
 
-        // Find all active Promotions that are either "Order Level" or "Storewide"
-        List<PromotionEntity> findByTypeIn(List<PromotionType> types);
+        @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
+        List<PromotionEntity> findDistinctByTypeIn(List<PromotionType> types);
 
-        @Query("SELECT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
+        @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
+        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
         List<PromotionEntity> findActivePromotions(@Param("now") LocalDateTime now);
 
         @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
-        @Query("SELECT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
+        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
         List<PromotionEntity> findActivePromotionsWithTargets(@Param("now") LocalDateTime now);
 
-        @Query("SELECT p FROM PromotionEntity p WHERE p.type IN :types AND p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
+        @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
+        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.type IN :types AND p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
         List<PromotionEntity> findActiveByType(@Param("types") List<PromotionType> types,
                         @Param("now") LocalDateTime now);
 

@@ -1,12 +1,17 @@
 package com.fsse2510.fsse2510_project_backend.data.product.domainObject.response;
 
 import com.fsse2510.fsse2510_project_backend.data.promotion.domainObject.response.PromotionResponseData;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+
+import java.util.Set;
 
 @Data
 @Builder
@@ -42,7 +47,7 @@ public class ProductResponseData implements Serializable, PromotionEnrichable {
     private String fabricInfo;
     private String designStyling;
     private String colorDisclaimer;
-    private java.util.Set<String> tags;
+    private Set<String> tags;
     private List<ProductImageResponseData> images;
     private List<ProductInventoryResponseData> inventories;
     private String promotionBadgeText;

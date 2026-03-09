@@ -5,7 +5,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fsse2510.fsse2510_project_backend.data.membership.domainObject.response.MembershipResponseData;
 import com.fsse2510.fsse2510_project_backend.data.user.UserRole;
 import com.fsse2510.fsse2510_project_backend.util.ValidationUtil;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;

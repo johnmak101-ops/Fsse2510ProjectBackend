@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,8 @@ public class ProductServiceImpl implements ProductService {
     private static final String CACHE_PRODUCT = "product_v4";
     private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v4";
     private static final String CACHE_ATTRIBUTES = "product_attributes_v4";
+    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v1";
+    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v1";
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -113,6 +116,7 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = CACHE_SHOWCASE_PRODUCTS, key = "#limit", sync = true)
     public SliceResponseDto<ProductSummaryData> getShowcaseProducts(int limit) {
         Slice<Integer> pidSlice = productRepository.findShowcaseProductIds(PageRequest.of(0, limit));
         List<ProductEntity> entities = fetchProductsByIdsShallow(pidSlice.getContent());
@@ -137,16 +141,28 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public SliceResponseDto<ProductSummaryData> searchProducts(ProductSearchCriteria criteria, Pageable pageable) {
         Specification<ProductEntity> spec = specificationBuilder.fromCriteria(criteria);
-       Page<ProductEntity> pageResult = productRepository.findAll(spec, pageable);
+        Page<ProductEntity> pageResult = productRepository.findAll(spec, pageable);
 
-        // ID-first pattern: extract IDs from the search result and batch load full
-        // entities
         List<Integer> ids = pageResult.getContent().stream().map(ProductEntity::getPid).toList();
         List<ProductEntity> fullEntities = fetchProductsByIdsShallow(ids);
 
         List<ProductSummaryData> content = fullEntities.stream().map(productDataMapper::toSummaryData).toList();
         content = productPromotionEnricherService.enrichSummariesWithPromotions(content, fullEntities);
         return SliceResponseDto.of(content, pageResult.hasNext());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SliceResponseDto<ProductSummaryData> searchProducts(ProductSearchCriteria criteria, int page, int limit) {
+        Sort sort = Sort.by(Sort.Direction.DESC, "pid");
+        if ("price_asc".equalsIgnoreCase(criteria.getSortBy())) {
+            sort = Sort.by(Sort.Direction.ASC, "price");
+        } else if ("price_desc".equalsIgnoreCase(criteria.getSortBy())) {
+            sort = Sort.by(Sort.Direction.DESC, "price");
+        }
+
+        int queryPage = (criteria.getLastPid() != null) ? 0 : page;
+        return searchProducts(criteria, PageRequest.of(queryPage, limit, sort));
     }
 
     @Override
@@ -174,6 +190,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Cacheable(value = CACHE_SHOWCASE_COLLECTIONS, key = "'all'", sync = true)
     public List<ShowcaseCollectionData> getShowcaseCollections() {
         return showcaseCollectionRepository.findAllByActiveTrueOrderByOrderIndexAsc().stream()
                 .map(e -> ShowcaseCollectionData.builder()

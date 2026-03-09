@@ -18,9 +18,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.math.RoundingMode.HALF_UP;
 
 /*
  * Service responsible for enriching product data (ProductResponseData,
@@ -272,7 +281,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         BigDecimal promotionalPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, bestPromo);
         BigDecimal discountAmount = originalPrice.subtract(promotionalPrice);
         BigDecimal discountPercentage = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? discountAmount.divide(originalPrice, 4, java.math.RoundingMode.HALF_UP)
+                ? discountAmount.divide(originalPrice, 4, HALF_UP)
                 : BigDecimal.ZERO;
 
         dto.setOriginalPrice(originalPrice);

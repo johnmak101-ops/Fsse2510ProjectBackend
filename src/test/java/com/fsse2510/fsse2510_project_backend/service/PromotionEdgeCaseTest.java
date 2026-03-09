@@ -24,9 +24,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 @ExtendWith(MockitoExtension.class)
 class PromotionEdgeCaseTest {
@@ -111,7 +118,7 @@ class PromotionEdgeCaseTest {
         activePromo.setTargetCategories(Set.of("  ELECTRONICS  "));
 
         when(promotionRepository.findActivePromotionsWithTargets(any())).thenReturn(List.of(activePromo));
-        when(productRepository.findById(1)).thenReturn(java.util.Optional.of(product));
+        when(productRepository.findById(1)).thenReturn(Optional.of(product));
         when(promotionApplicabilityService.isApplicable(any(), any(), any(Boolean.class))).thenReturn(true);
         lenient().when(promotionCalculator.calculateDiscountAmount(any(), any())).thenReturn(new BigDecimal("10"));
         when(promotionCalculator.calculatePromotionalPrice(any(), any())).thenReturn(new BigDecimal("90"));
@@ -139,7 +146,7 @@ class PromotionEdgeCaseTest {
 
         when(promotionRepository.findActivePromotionsWithTargets(any()))
                 .thenReturn(List.of(standardPromo, membershipPromo));
-        when(productRepository.findById(1)).thenReturn(java.util.Optional.of(product));
+        when(productRepository.findById(1)).thenReturn(Optional.of(product));
         when(promotionApplicabilityService.isApplicable(any(), any(), any(Boolean.class))).thenReturn(true);
 
         // Both give $20 discount

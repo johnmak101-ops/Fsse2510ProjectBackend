@@ -1,10 +1,23 @@
 package com.fsse2510.fsse2510_project_backend.data.user.entity;
 
 import com.fsse2510.fsse2510_project_backend.data.membership.membershipLevel.MembershipLevel;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+
+import com.fsse2510.fsse2510_project_backend.util.ValidationUtil;
 
 @Entity
 @Table(name = "user", indexes = {
@@ -57,6 +70,6 @@ public class UserEntity {
     private LocalDate birthday;
 
     public boolean isInfoComplete() {
-        return com.fsse2510.fsse2510_project_backend.util.ValidationUtil.isProfileComplete(fullName, phoneNumber);
+        return ValidationUtil.isProfileComplete(fullName, phoneNumber);
     }
 }

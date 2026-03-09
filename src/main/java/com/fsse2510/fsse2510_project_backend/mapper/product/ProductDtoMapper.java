@@ -1,7 +1,9 @@
 package com.fsse2510.fsse2510_project_backend.mapper.product;
 
+import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductAttributesData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductResponseData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductSummaryData;
+import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductAttributesResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductDetailResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductSummaryResponseDto;
@@ -53,6 +55,8 @@ public interface ProductDtoMapper {
     @Mapping(target = "images", source = "images")
     @Mapping(target = "details", source = "details")
     ProductDetailResponseDto toDetailResponseDto(ProductResponseData data);
+
+    ProductAttributesResponseDto toAttributesResponseDto(ProductAttributesData data);
 
     default ShowcaseCollectionResponseDto toShowcaseDto(ShowcaseCollectionData data) {
         return ShowcaseCollectionResponseDto.builder()

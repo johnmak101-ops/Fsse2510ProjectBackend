@@ -5,7 +5,10 @@ import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.Promot
 import com.fsse2510.fsse2510_project_backend.mapper.promotion.PromotionDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.PromotionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 

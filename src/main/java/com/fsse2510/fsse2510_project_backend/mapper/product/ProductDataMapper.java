@@ -3,11 +3,13 @@ package com.fsse2510.fsse2510_project_backend.mapper.product;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CollectionEntity;
 
+import com.fsse2510.fsse2510_project_backend.data.product.domainObject.ProductDetails;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.request.CreateProductRequestData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.request.UpdateProductRequestData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductResponseData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductSummaryData;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.request.CreateProductRequestDto;
+import com.fsse2510.fsse2510_project_backend.data.product.dto.request.UpdateProductMetadataRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.request.UpdateProductRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductImageEntity; // added
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
@@ -24,6 +26,8 @@ import org.mapstruct.Mapping;
 public interface ProductDataMapper {
 
     CreateProductRequestData toCreateRequestData(CreateProductRequestDto dto);
+
+    ProductDetails toProductDetails(UpdateProductMetadataRequestDto dto);
 
     @Mapping(target = "pid", source = "pid")
     @Mapping(target = "category", source = "dto.category")

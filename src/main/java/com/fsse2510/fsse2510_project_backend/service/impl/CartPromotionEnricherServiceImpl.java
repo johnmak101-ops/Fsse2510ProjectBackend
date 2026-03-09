@@ -19,7 +19,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -192,6 +200,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
                 : BigDecimal.ZERO;
 
         item.setPrice(newNetPrice);
+        item.setOriginalPrice(originalPrice);
         item.setDiscountAmount(newDiscountAmount);
         item.setDiscountPercentage(newDiscountPct);
 

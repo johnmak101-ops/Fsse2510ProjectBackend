@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -16,5 +18,5 @@ public class ProductInventoryResponseDto {
     private String color;
     private Integer stock;
     private Integer stockReserved;
-    private java.math.BigDecimal weight;
+    private BigDecimal weight;
 }

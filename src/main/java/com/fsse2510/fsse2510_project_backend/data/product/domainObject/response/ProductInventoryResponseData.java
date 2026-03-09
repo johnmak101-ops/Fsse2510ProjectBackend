@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+import java.math.BigDecimal;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -17,5 +19,5 @@ public class ProductInventoryResponseData implements Serializable {
     private String color;
     private Integer stock;
     private Integer stockReserved;
-    private java.math.BigDecimal weight;
+    private BigDecimal weight;
 }

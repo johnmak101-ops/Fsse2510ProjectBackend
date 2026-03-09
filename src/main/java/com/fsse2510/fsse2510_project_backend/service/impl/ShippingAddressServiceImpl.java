@@ -3,10 +3,11 @@ package com.fsse2510.fsse2510_project_backend.service.impl;
 import com.fsse2510.fsse2510_project_backend.data.address.dto.request.CreateShippingAddressRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.address.dto.response.ShippingAddressResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity;
-import com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository;
 import com.fsse2510.fsse2510_project_backend.data.user.entity.UserEntity;
 import com.fsse2510.fsse2510_project_backend.exception.address.AddressNotFoundException;
+import com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository;
 import com.fsse2510.fsse2510_project_backend.service.ShippingAddressService;
+import com.fsse2510.fsse2510_project_backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,10 +19,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ShippingAddressServiceImpl implements ShippingAddressService {
     private final ShippingAddressRepository addressRepository;
+    private final UserService userService;
 
     @Override
     @Transactional(readOnly = true)
-    public List<ShippingAddressResponseDto> getAllAddresses(UserEntity user) {
+    public List<ShippingAddressResponseDto> getAllAddresses(String firebaseUid) {
+        UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
         return addressRepository.findByUser(user).stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -29,7 +32,9 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     @Override
     @Transactional
-    public ShippingAddressResponseDto createAddress(UserEntity user, CreateShippingAddressRequestDto requestDto) {
+    public ShippingAddressResponseDto createAddress(String firebaseUid, CreateShippingAddressRequestDto requestDto) {
+        UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
+
         if (Boolean.TRUE.equals(requestDto.getIsDefault())) {
             unsetCurrentDefault(user);
         }
@@ -51,8 +56,10 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     @Override
     @Transactional
-    public ShippingAddressResponseDto updateAddress(UserEntity user, Integer id,
+    public ShippingAddressResponseDto updateAddress(String firebaseUid, Integer id,
             CreateShippingAddressRequestDto requestDto) {
+        UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
+
         ShippingAddressEntity entity = addressRepository.findById(id)
                 .filter(a -> a.getUser().getUid().equals(user.getUid()))
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));
@@ -75,7 +82,9 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     @Override
     @Transactional
-    public void deleteAddress(UserEntity user, Integer id) {
+    public void deleteAddress(String firebaseUid, Integer id) {
+        UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
+
         ShippingAddressEntity entity = addressRepository.findById(id)
                 .filter(a -> a.getUser().getUid().equals(user.getUid()))
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));
@@ -85,7 +94,9 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     @Override
     @Transactional
-    public ShippingAddressResponseDto setDefaultAddress(UserEntity user, Integer id) {
+    public ShippingAddressResponseDto setDefaultAddress(String firebaseUid, Integer id) {
+        UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
+
         ShippingAddressEntity entity = addressRepository.findById(id)
                 .filter(a -> a.getUser().getUid().equals(user.getUid()))
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));

@@ -1,7 +1,12 @@
 package com.fsse2510.fsse2510_project_backend.data.cartitem.dto.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -17,15 +22,15 @@ public class CartItemResponseDto {
     private BigDecimal originalPrice;
     private BigDecimal discountAmount;
     private BigDecimal discountPercentage;
-    private java.util.List<String> promotionBadgeTexts;
+    private List<String> promotionBadgeTexts;
     private Integer cartQuantity;
     private Integer stock;
     private String selectedSize;
     private String selectedColor;
 
     // Product metadata for frontend promotion eligibility checks
-    private java.util.List<Integer> appliedPromotionIds;
+    private List<Integer> appliedPromotionIds;
     private String category;
     private String collection;
-    private java.util.List<String> tags;
+    private List<String> tags;
 }

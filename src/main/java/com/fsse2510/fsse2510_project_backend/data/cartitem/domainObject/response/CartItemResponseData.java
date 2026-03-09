@@ -1,12 +1,17 @@
 package com.fsse2510.fsse2510_project_backend.data.cartitem.domainObject.response;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.util.Set;
 
 @Data
 @Builder
@@ -37,5 +42,5 @@ public class CartItemResponseData implements Serializable {
     private List<Integer> appliedPromotionIds = new ArrayList<>();
     private String category;
     private String collection;
-    private java.util.Set<String> tags;
+    private Set<String> tags;
 }

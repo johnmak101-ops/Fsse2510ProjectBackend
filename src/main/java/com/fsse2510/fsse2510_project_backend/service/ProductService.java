@@ -27,9 +27,11 @@ public interface ProductService {
 
         SliceResponseDto<ProductSummaryData> getYouMayAlsoLike(String collection, Integer currentPid, int limit);
 
-        SliceResponseDto<ProductSummaryData> searchProducts(ProductSearchCriteria criteria, Pageable pageable);
+    SliceResponseDto<ProductSummaryData> searchProducts(ProductSearchCriteria criteria, Pageable pageable);
 
-        ProductAttributesData getAttributes();
+    SliceResponseDto<ProductSummaryData> searchProducts(ProductSearchCriteria criteria, int page, int limit);
+
+    ProductAttributesData getAttributes();
 
         List<ShowcaseCollectionData> getShowcaseCollections();
 }

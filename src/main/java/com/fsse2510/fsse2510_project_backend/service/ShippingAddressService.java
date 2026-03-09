@@ -2,18 +2,17 @@ package com.fsse2510.fsse2510_project_backend.service;
 
 import com.fsse2510.fsse2510_project_backend.data.address.dto.request.CreateShippingAddressRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.address.dto.response.ShippingAddressResponseDto;
-import com.fsse2510.fsse2510_project_backend.data.user.entity.UserEntity;
 
 import java.util.List;
 
 public interface ShippingAddressService {
-    List<ShippingAddressResponseDto> getAllAddresses(UserEntity user);
+    List<ShippingAddressResponseDto> getAllAddresses(String firebaseUid);
 
-    ShippingAddressResponseDto createAddress(UserEntity user, CreateShippingAddressRequestDto requestDto);
+    ShippingAddressResponseDto createAddress(String firebaseUid, CreateShippingAddressRequestDto requestDto);
 
-    ShippingAddressResponseDto updateAddress(UserEntity user, Integer id, CreateShippingAddressRequestDto requestDto);
+    ShippingAddressResponseDto updateAddress(String firebaseUid, Integer id, CreateShippingAddressRequestDto requestDto);
 
-    void deleteAddress(UserEntity user, Integer id);
+    void deleteAddress(String firebaseUid, Integer id);
 
-    ShippingAddressResponseDto setDefaultAddress(UserEntity user, Integer id);
+    ShippingAddressResponseDto setDefaultAddress(String firebaseUid, Integer id);
 }

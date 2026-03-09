@@ -8,11 +8,13 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.List;
 
+import java.io.Serializable;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductAttributesData implements java.io.Serializable {
+public class ProductAttributesData implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 

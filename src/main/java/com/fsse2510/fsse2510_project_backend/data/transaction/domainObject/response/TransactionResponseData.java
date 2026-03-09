@@ -2,7 +2,10 @@ package com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.resp
 
 import com.fsse2510.fsse2510_project_backend.data.transaction.status.PaymentStatus;
 import com.fsse2510.fsse2510_project_backend.data.transactionProduct.domainObject.response.TransactionProductResponseData;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;

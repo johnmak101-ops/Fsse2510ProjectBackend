@@ -39,7 +39,16 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity;
+import com.fsse2510.fsse2510_project_backend.exception.transaction.IllegalPaymentOperationException;
+import com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository;
+import java.util.Optional;
+import org.junit.jupiter.api.Assertions;
 
 @ExtendWith(MockitoExtension.class)
 class TransactionPointsDiscrepancyTest {
@@ -65,7 +74,7 @@ class TransactionPointsDiscrepancyTest {
         @Mock
         private UserDataMapper userDataMapper;
         @Mock
-        private com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository shippingAddressRepository;
+        private ShippingAddressRepository shippingAddressRepository;
 
         @InjectMocks
         private TransactionServiceImpl transactionService;
@@ -158,9 +167,9 @@ class TransactionPointsDiscrepancyTest {
                                         .build();
                 });
 
-                com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity addressEntity = new com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity();
+                ShippingAddressEntity addressEntity = new ShippingAddressEntity();
                 addressEntity.setUser(userEntity);
-                when(shippingAddressRepository.findById(1)).thenReturn(java.util.Optional.of(addressEntity));
+                when(shippingAddressRepository.findById(1)).thenReturn(Optional.of(addressEntity));
 
                 // --- Execute CREATE ---
                 CreateTransactionRequestData createRequest = CreateTransactionRequestData.builder()
@@ -193,9 +202,9 @@ class TransactionPointsDiscrepancyTest {
                 // before calling Stripe
 
                 // Expect ProviderException because 0.50 < 4.00
-                com.fsse2510.fsse2510_project_backend.exception.transaction.IllegalPaymentOperationException exception = org.junit.jupiter.api.Assertions
+                IllegalPaymentOperationException exception = Assertions
                                 .assertThrows(
-                                                com.fsse2510.fsse2510_project_backend.exception.transaction.IllegalPaymentOperationException.class,
+                                                IllegalPaymentOperationException.class,
                                                 () -> transactionService.preparePayment(firebaseUser, 100));
 
                 assertEquals(

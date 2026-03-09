@@ -9,6 +9,10 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+
 /**
  * Redis Cache configuration(see baeldung.com/spring-boot-redis-cache)
  * Default: 60mins, no null cache, and view Redis JSON for debug use
@@ -20,11 +24,11 @@ public class CacheConfig {
 
         @Bean
         public RedisCacheConfiguration cacheConfiguration() {
-                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                mapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.registerModule(new JavaTimeModule());
                 mapper.activateDefaultTyping(mapper.getPolymorphicTypeValidator(),
-                                com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping.NON_FINAL,
-                                com.fasterxml.jackson.annotation.JsonTypeInfo.As.PROPERTY);
+                                ObjectMapper.DefaultTyping.NON_FINAL,
+                                JsonTypeInfo.As.PROPERTY);
 
                 return RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(60)) // Default TTL 1 hour
@@ -45,7 +49,16 @@ public class CacheConfig {
                                 .withCacheConfiguration("product_showcase",
                                                 RedisCacheConfiguration.defaultCacheConfig()
                                                                 .entryTtl(Duration.ofHours(1)))
+                                .withCacheConfiguration("product_showcase_v1",
+                                                RedisCacheConfiguration.defaultCacheConfig()
+                                                                .entryTtl(Duration.ofHours(1)))
                                 .withCacheConfiguration("product_attributes",
+                                                RedisCacheConfiguration.defaultCacheConfig()
+                                                                .entryTtl(Duration.ofHours(12)))
+                                .withCacheConfiguration("navigation_v1",
+                                                RedisCacheConfiguration.defaultCacheConfig()
+                                                                .entryTtl(Duration.ofHours(24)))
+                                .withCacheConfiguration("showcase_collections_v1",
                                                 RedisCacheConfiguration.defaultCacheConfig()
                                                                 .entryTtl(Duration.ofHours(12)));
         }

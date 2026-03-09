@@ -14,6 +14,7 @@ import com.fsse2510.fsse2510_project_backend.exception.transaction.IllegalPaymen
 import com.fsse2510.fsse2510_project_backend.exception.user.UserNotFoundException;
 import com.fsse2510.fsse2510_project_backend.exception.promotion.PromotionNotFoundException;
 import com.fsse2510.fsse2510_project_backend.exception.promotion.PromotionValidationException;
+import com.fsse2510.fsse2510_project_backend.exception.showcase.ShowcaseCollectionNotFoundException;
 import com.fsse2510.fsse2510_project_backend.exception.coupon.CouponAlreadyExistsException;
 import com.fsse2510.fsse2510_project_backend.exception.address.AddressNotFoundException;
 import com.fsse2510.fsse2510_project_backend.exception.address.MissingShippingAddressException;
@@ -41,7 +42,8 @@ public class GlobalExceptionHandler {
             TransactionNotFoundException.class,
             UserNotFoundException.class,
             AddressNotFoundException.class,
-            PromotionNotFoundException.class
+            PromotionNotFoundException.class,
+            ShowcaseCollectionNotFoundException.class
     })
     public ResponseEntity<ErrorResponse> handleNotFound(RuntimeException ex) {
         logger.debug("Resource Not Found: {}", ex.getMessage());

@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.TestPropertySource;
 
+import org.h2.Driver;
+
 @SpringBootTest
 @TestPropertySource(properties = {
         "app.frontend.url=http://localhost:3000",

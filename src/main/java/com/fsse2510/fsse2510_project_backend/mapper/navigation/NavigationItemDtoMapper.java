@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import com.fsse2510.fsse2510_project_backend.data.navigation.dto.response.NavigationOptionsResponseDto;
+
 @Component
 public class NavigationItemDtoMapper {
 
@@ -67,12 +69,12 @@ public class NavigationItemDtoMapper {
                 .build();
     }
 
-    public com.fsse2510.fsse2510_project_backend.data.navigation.dto.response.NavigationOptionsResponseDto toOptionsResponseDto(
+    public NavigationOptionsResponseDto toOptionsResponseDto(
             com.fsse2510.fsse2510_project_backend.data.navigation.domainObject.response.NavigationOptionsData data) {
         if (data == null) {
             return null;
         }
-        return com.fsse2510.fsse2510_project_backend.data.navigation.dto.response.NavigationOptionsResponseDto.builder()
+        return NavigationOptionsResponseDto.builder()
                 .collections(data.getCollections())
                 .categories(data.getCategories())
                 .tags(data.getTags())
