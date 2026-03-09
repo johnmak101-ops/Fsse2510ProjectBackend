@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Data
 @Builder
@@ -33,7 +34,7 @@ public class ProductSummaryResponseDto {
     private Boolean onSale;
 
     private Integer appliedPromotionId;
-    private String promotionBadgeText;
+    private List<String> promotionBadgeTexts;
 
     @JsonProperty("isFeatured")
     private Boolean featured;

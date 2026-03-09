@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -267,7 +268,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         if (entity == null)
             return setNoDiscount(dto);
 
-        dto.setPromotionBadgeText(null);
+        dto.setPromotionBadgeTexts(new ArrayList<>());
         dto.setIsSale(false);
 
         PromotionEntity bestPromo = findBestPromotion(entity, index);
@@ -296,7 +297,10 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
             dto.setDiscountPercentage(BigDecimal.ZERO);
         }
 
-        dto.setPromotionBadgeText(promotionCalculator.generateBadgeText(bestPromo));
+        String badge = promotionCalculator.generateBadgeText(bestPromo);
+        if (badge != null) {
+            dto.getPromotionBadgeTexts().add(badge);
+        }
         dto.setIsSale(true);
 
         checkAndSetMembershipBadge(dto, index.allPromos, entity);
@@ -305,9 +309,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
     }
 
     /*
-     * Set membership teaser badge if applicable.
-     * Replaces the duplicate checkAndSetMembershipBadge(ProductResponseData, ...)
-     * pair.
+     * Append membership teaser badge if applicable (does not overwrite existing badges).
      */
     private <T extends PromotionEnrichable> void checkAndSetMembershipBadge(T dto,
             List<PromotionEntity> activePromos,
@@ -317,21 +319,23 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                         && promotionApplicabilityService.isProductEligibleForPromotion(p, entity))
                 .findFirst()
                 .ifPresent(p -> {
-                    dto.setPromotionBadgeText(promotionCalculator.generateBadgeText(p));
+                    String badge = promotionCalculator.generateBadgeText(p);
+                    if (badge != null && !dto.getPromotionBadgeTexts().contains(badge)) {
+                        dto.getPromotionBadgeTexts().add(badge);
+                    }
                     dto.setIsSale(true);
                 });
     }
 
     /*
      * Clear all promotion-related fields. Works for any PromotionEnrichable DTO.
-     * Replaces the duplicate setNoDiscount / setNoDiscountSummary pair.
      */
     private <T extends PromotionEnrichable> T setNoDiscount(T dto) {
         dto.setOriginalPrice(dto.getPrice());
         dto.setDiscountAmount(BigDecimal.ZERO);
         dto.setDiscountPercentage(BigDecimal.ZERO);
         if (Boolean.FALSE.equals(dto.getIsSale())) {
-            dto.setPromotionBadgeText(null);
+            dto.setPromotionBadgeTexts(Collections.emptyList());
         }
         return dto;
     }

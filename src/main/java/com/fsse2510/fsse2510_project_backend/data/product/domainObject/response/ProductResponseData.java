@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import java.util.Set;
@@ -50,7 +51,8 @@ public class ProductResponseData implements Serializable, PromotionEnrichable {
     private Set<String> tags;
     private List<ProductImageResponseData> images;
     private List<ProductInventoryResponseData> inventories;
-    private String promotionBadgeText;
+    @Builder.Default
+    private List<String> promotionBadgeTexts = new ArrayList<>();
     private PromotionResponseData promotion;
 
     // Support for Dynamic Metadata

@@ -24,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -74,7 +75,7 @@ public class TransactionFinalizationService {
         return response;
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleFailureWithRecovery(FirebaseUserData firebaseUser, Integer tid,
             PaymentIntent intent, Exception e) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUser, tid);
@@ -134,7 +135,9 @@ public class TransactionFinalizationService {
         logger.error("Error finalizing transaction {}. Error: {}", transaction.getTid(), e.getMessage());
 
         if (intent != null && PAYMENT_READY_SUCCESS.equals(intent.getStatus())) {
-            logger.warn("Transaction {} failed in DB but payment was already CAPTURED. Manual intervention required.",
+            // Payment already captured — money is taken. Keep PROCESSING so Stripe
+            // webhook retry can re-attempt finalization. Do NOT mark FAILED or recover cart.
+            logger.warn("TID {} failed but payment already CAPTURED. Leaving in PROCESSING for webhook retry.",
                     transaction.getTid());
             return;
         }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -30,7 +31,8 @@ public class ProductSummaryData implements Serializable, PromotionEnrichable {
     private String productType;
     private Boolean isNew;
     private Boolean isSale;
-    private String promotionBadgeText; // Display text e.g., "20% OFF"
+    @Builder.Default
+    private List<String> promotionBadgeTexts = new ArrayList<>();
     private Boolean isFeatured; // Added
     private Boolean hasStock; // Added
     private Integer stock; // Added: Total stock quantity

@@ -51,5 +51,5 @@ public class ProductDetailResponseDto {
 
     // Support for Dynamic Metadata (New!)
     private ProductDetails details;
-    private String promotionBadgeText;
+    private List<String> promotionBadgeTexts;
 }

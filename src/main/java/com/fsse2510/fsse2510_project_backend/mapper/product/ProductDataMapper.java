@@ -13,16 +13,12 @@ import com.fsse2510.fsse2510_project_backend.data.product.dto.request.UpdateProd
 import com.fsse2510.fsse2510_project_backend.data.product.dto.request.UpdateProductRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductImageEntity; // added
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
-import com.fsse2510.fsse2510_project_backend.data.common.constant.DiscountType;
-import com.fsse2510.fsse2510_project_backend.data.promotion.entity.PromotionEntity;
-import com.fsse2510.fsse2510_project_backend.mapper.promotion.PromotionDataMapper;
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = { PromotionDataMapper.class, ProductImageMapper.class })
+@Mapper(componentModel = "spring", uses = { ProductImageMapper.class })
 public interface ProductDataMapper {
 
     CreateProductRequestData toCreateRequestData(CreateProductRequestDto dto);
@@ -46,7 +42,7 @@ public interface ProductDataMapper {
     @Mapping(target = "details.vendor", source = "dto.vendor") // Added mapping
     UpdateProductRequestData toUpdateRequestData(Integer pid, UpdateProductRequestDto dto);
 
-    @Mapping(target = "promotion", source = "promotion")
+    @Mapping(target = "promotion", ignore = true)
     @Mapping(target = "stock", expression = "java(entity.getTotalStock())")
     @Mapping(target = "hasStock", expression = "java(entity.getTotalStock() > 0)")
     @Mapping(target = "slug", source = "slug")
@@ -78,6 +74,7 @@ public interface ProductDataMapper {
     @Mapping(target = "discountAmount", ignore = true)
     @Mapping(target = "discountPercentage", ignore = true)
     @Mapping(target = "shopifyId", ignore = true)
+    @Mapping(target = "promotionBadgeTexts", ignore = true)
     ProductResponseData toResponseData(ProductEntity entity);
 
     @Mapping(target = "imageUrl", source = "imageUrl")
@@ -91,6 +88,7 @@ public interface ProductDataMapper {
     @Mapping(target = "discountAmount", ignore = true)
     @Mapping(target = "discountPercentage", ignore = true)
     @Mapping(target = "images", ignore = true) // No need to fetch all images for Listing Page
+    @Mapping(target = "promotionBadgeTexts", ignore = true)
     ProductSummaryData toSummaryData(ProductEntity entity);
 
     // Helper: Build summary from full ResponseData (e.g., for caching fallback)
@@ -98,24 +96,8 @@ public interface ProductDataMapper {
     @Mapping(target = "originalPrice", source = "originalPrice")
     @Mapping(target = "discountAmount", source = "discountAmount")
     @Mapping(target = "discountPercentage", source = "discountPercentage")
-    @Mapping(target = "promotionBadgeText", ignore = true)
+    @Mapping(target = "promotionBadgeTexts", ignore = true)
     ProductSummaryData toSummaryDataFromResponseData(ProductResponseData data);
-
-    default BigDecimal calculateDiscountPrice(ProductEntity entity) {
-        if (entity.getPromotion() == null || !entity.getPromotion().isValidDate()) {
-            return null;
-        }
-        PromotionEntity promo = entity.getPromotion();
-        if (promo.getDiscountType() == DiscountType.PERCENTAGE) {
-            // discountValue = 20 means 20% discount amount
-            BigDecimal discountFactor = BigDecimal.valueOf(100).subtract(promo.getDiscountValue())
-                    .divide(BigDecimal.valueOf(100));
-            return entity.getPrice().multiply(discountFactor);
-        } else if (promo.getDiscountType() == DiscountType.FIXED) {
-            return entity.getPrice().subtract(promo.getDiscountValue()).max(BigDecimal.ZERO);
-        }
-        return null;
-    }
 
     default List<ProductSummaryData.ProductImageSummaryData> mapToImageSummary(
             List<ProductImageEntity> images) {

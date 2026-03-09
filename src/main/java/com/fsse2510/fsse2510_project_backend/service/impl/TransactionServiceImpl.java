@@ -92,7 +92,9 @@ public class TransactionServiceImpl implements TransactionService {
 
         snapshotAddress(transaction, userData.getUid(), requestData.getAddressId());
 
-        transaction.setTotal(totalAmount.max(BigDecimal.ZERO));
+        BigDecimal finalTotal = totalAmount.max(BigDecimal.ZERO);
+        validateNotInPaymentDeadZone(finalTotal);
+        transaction.setTotal(finalTotal);
         TransactionEntity savedTransaction = transactionRepository.save(transaction);
 
         clearUserCart(requestData.getUser(), cartItems);
@@ -160,9 +162,12 @@ public class TransactionServiceImpl implements TransactionService {
             MembershipLevel prefLevel = transaction.getUser().getLevel();
             return finalizationService.finalizeSuccess(firebaseUser, tid, prefLevel);
 
+        } catch (RuntimeException e) {
+            finalizationService.handleFailureWithRecovery(firebaseUser, tid, intent, e);
+            throw e;
         } catch (Exception e) {
             finalizationService.handleFailureWithRecovery(firebaseUser, tid, intent, e);
-            throw (RuntimeException) e;
+            throw new RuntimeException(e);
         }
     }
 
@@ -206,7 +211,6 @@ public class TransactionServiceImpl implements TransactionService {
                                                    Long amount, String currency) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
-            transactionDataMapper.toData(transaction);
             return;
         }
         if (transaction.getStripePaymentIntentId() == null
@@ -222,7 +226,6 @@ public class TransactionServiceImpl implements TransactionService {
                                                     String intentId) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
-            transactionDataMapper.toData(transaction);
             return;
         }
         transaction.setStripePaymentIntentId(intentId);
@@ -235,7 +238,6 @@ public class TransactionServiceImpl implements TransactionService {
     public void failTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
-            transactionDataMapper.toData(transaction);
             return;
         }
         if (transaction.getStripePaymentIntentId() == null
@@ -255,7 +257,6 @@ public class TransactionServiceImpl implements TransactionService {
                 || transaction.getStatus() == PaymentStatus.ABORTED) {
             logger.info("[Webhook] Transaction {} already in final state: {}, skipping abort",
                     tid, transaction.getStatus());
-            transactionDataMapper.toData(transaction);
             return;
         }
 
@@ -345,6 +346,17 @@ public class TransactionServiceImpl implements TransactionService {
         }
     }
 
+    private void validateNotInPaymentDeadZone(BigDecimal total) {
+        if (total.compareTo(BigDecimal.ZERO) > 0
+                && total.compareTo(BusinessConstants.MIN_PAYMENT_AMOUNT) < 0) {
+            throw new IllegalPaymentOperationException(
+                    "Order total HKD " + total.toPlainString()
+                            + " falls below minimum payment amount of HKD "
+                            + BusinessConstants.MIN_PAYMENT_AMOUNT.toPlainString()
+                            + ". Please adjust points usage to fully cover the order or reduce points to keep total above minimum.");
+        }
+    }
+
     private List<CartItemResponseData> fetchAndValidateCart(FirebaseUserData user) {
         List<CartItemResponseData> cartItems = cartItemService.getUserCart(user);
         if (cartItems.isEmpty()) {
@@ -355,9 +367,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     private TransactionEntity initTransactionEntity(UserData userData) {
         TransactionEntity transaction = new TransactionEntity();
-        UserEntity user = new UserEntity();
-        user.setUid(userData.getUid());
-        transaction.setUser(user);
+        transaction.setUser(userRepository.getReferenceById(userData.getUid()));
         transaction.setDatetime(LocalDateTime.now());
         transaction.setStatus(PaymentStatus.PENDING);
         return transaction;
@@ -431,7 +441,8 @@ public class TransactionServiceImpl implements TransactionService {
 
         BigDecimal pointsRequested = BigDecimal.valueOf(usePoints).min(virtualPoints);
         BigDecimal actualDiscount = calculatePointsDiscount(pointsRequested, virtualPoints, currentTotal);
-        int pointsActuallyUsed = actualDiscount.multiply(BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE)).intValue();
+        int pointsActuallyUsed = actualDiscount.multiply(BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE))
+                .setScale(0, RoundingMode.CEILING).intValue();
 
         transaction.setUsedPoints(pointsActuallyUsed);
         return scaleAmount(currentTotal.subtract(actualDiscount));

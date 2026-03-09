@@ -1,6 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.data.product.domainObject.response;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * Marker interface for product DTOs that support promotion enrichment.
@@ -22,7 +23,9 @@ public interface PromotionEnrichable {
 
     void setDiscountPercentage(BigDecimal discountPercentage);
 
-    void setPromotionBadgeText(String badgeText);
+    List<String> getPromotionBadgeTexts();
+
+    void setPromotionBadgeTexts(List<String> badgeTexts);
 
     void setIsSale(Boolean isSale);
 }

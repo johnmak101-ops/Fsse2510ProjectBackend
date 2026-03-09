@@ -22,6 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import com.fsse2510.fsse2510_project_backend.service.PromotionProductSyncService;
 
 import java.time.LocalDateTime;
@@ -61,13 +63,10 @@ public class PromotionServiceImpl implements PromotionService {
         PromotionEntity entity = promotionEntityMapper.toEntity(requestData);
         PromotionEntity savedEntity = promotionRepository.save(entity);
 
-        // Clear cache IMMEDIATELY (sync) before async to prevent stale data
-        promotionProductSyncService.clearProductCache();
-        cartPromotionEnricherService.clearCache();
-        productPromotionEnricherService.clearCache();
-
         promotionProductSyncService.applyPromotionToProductsAsync(savedEntity);
         logger.info("Triggered async product sync for promotion: id={}", savedEntity.getId());
+
+        registerCacheClearAfterCommit();
 
         return promotionDataMapper.toResponseData(savedEntity);
     }
@@ -107,11 +106,6 @@ public class PromotionServiceImpl implements PromotionService {
                     return new PromotionNotFoundException(id);
                 });
 
-        // Clear cache IMMEDIATELY (sync) before async operations
-        promotionProductSyncService.clearProductCache();
-        cartPromotionEnricherService.clearCache();
-        productPromotionEnricherService.clearCache();
-
         // Remove old promotion from products sync
         promotionProductSyncService.removePromotionFromProductsSync(id);
 
@@ -123,6 +117,8 @@ public class PromotionServiceImpl implements PromotionService {
         // Re-apply updated promotion async
         promotionProductSyncService.applyPromotionToProductsAsync(savedEntity);
         logger.info("Triggered async re-sync for updated promotion: id={}", savedEntity.getId());
+
+        registerCacheClearAfterCommit();
 
         return promotionDataMapper.toResponseData(savedEntity);
     }
@@ -137,12 +133,6 @@ public class PromotionServiceImpl implements PromotionService {
             throw new PromotionNotFoundException(id);
         }
 
-        // Clear cache IMMEDIATELY (sync) - user will see updated data on refresh
-        promotionProductSyncService.clearProductCache();
-        cartPromotionEnricherService.clearCache();
-        productPromotionEnricherService.clearCache();
-        logger.info("Cache cleared for promotion deletion: id={}", id);
-
         // Remove promotion from products first (sync) to avoid FK constraint issues
         promotionProductSyncService.removePromotionFromProductsSync(id);
         logger.info("Sync product cleanup completed for deleted promotion: id={}", id);
@@ -150,6 +140,8 @@ public class PromotionServiceImpl implements PromotionService {
         // Delete promotion
         promotionRepository.deleteById(id);
         logger.info("Deleted promotion: id={}", id);
+
+        registerCacheClearAfterCommit();
     }
 
     @Override
@@ -164,6 +156,18 @@ public class PromotionServiceImpl implements PromotionService {
         product.setPromotion(promotion);
         productRepository.save(product);
         logger.info("Assigned Promotion ID={} to Product ID={}", promoId, pid);
+    }
+
+    private void registerCacheClearAfterCommit() {
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                promotionProductSyncService.clearProductCache();
+                cartPromotionEnricherService.clearCache();
+                productPromotionEnricherService.clearCache();
+                logger.info("Promotion caches cleared after transaction commit.");
+            }
+        });
     }
 
     private void validatePromotionRequest(LocalDateTime start, LocalDateTime end, PromotionType type,
