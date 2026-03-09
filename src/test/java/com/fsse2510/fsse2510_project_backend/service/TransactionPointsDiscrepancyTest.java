@@ -37,6 +37,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -150,28 +151,14 @@ class TransactionPointsDiscrepancyTest {
                 when(couponService.validateCoupon(eq("COUPON1"), any(BigDecimal.class),
                                 eq(MembershipLevel.NO_MEMBERSHIP))).thenReturn(coupon);
 
-                // Mock Save
-                ArgumentCaptor<TransactionEntity> transactionCaptor = ArgumentCaptor.forClass(TransactionEntity.class);
-                when(transactionRepository.save(transactionCaptor.capture())).thenAnswer(i -> {
-                        TransactionEntity t = i.getArgument(0);
-                        t.setTid(100); // Simulate DB ID
-                        return t;
-                });
-
-                // Mock Mapper
-                when(transactionDataMapper.toData(any())).thenAnswer(i -> {
-                        TransactionEntity t = i.getArgument(0);
-                        return TransactionResponseData.builder()
-                                        .tid(t.getTid())
-                                        .total(t.getTotal())
-                                        .build();
-                });
-
                 ShippingAddressEntity addressEntity = new ShippingAddressEntity();
                 addressEntity.setUser(userEntity);
                 when(shippingAddressRepository.findById(1)).thenReturn(Optional.of(addressEntity));
 
                 // --- Execute CREATE ---
+                // Final total: 34.50 - 1.00 (coupon) - 33.00 (points) = 0.50
+                // 0.50 falls in the "dead zone" (> $0 but < $4.00 MIN_PAYMENT_AMOUNT),
+                // so createTransaction should reject it early.
                 CreateTransactionRequestData createRequest = CreateTransactionRequestData.builder()
                                 .user(firebaseUser)
                                 .couponCode("COUPON1")
@@ -179,36 +166,11 @@ class TransactionPointsDiscrepancyTest {
                                 .addressId(1)
                                 .build();
 
-                TransactionResponseData createResult = transactionService.createTransaction(createRequest);
-
-                // --- Verify CREATE Result ---
-                // 1. Initial Calculation: 34.50
-                // 2. Coupon: 34.50 - 1.00 = 33.50
-                // 3. Points: 330 points = 33.00 discount
-                // 4. Final: 33.50 - 33.00 = 0.50
-                System.out.println("Transaction Total: " + createResult.getTotal());
-                assertEquals(0, new BigDecimal("0.50").compareTo(createResult.getTotal()),
-                                "Transaction total should be 0.50");
-
-                // --- Prepare Payment (Stripe) ---
-                // Now simulate preparePayment and see what gets sent to Stripe
-
-                // Mock finding the transaction
-                when(transactionRepository.findByTidAndUser_Uid(eq(100), eq(1))).thenAnswer(i -> {
-                        return Optional.of(transactionCaptor.getValue());
-                });
-
-                // Mock Stripe Session.create - Removed because we expect ProviderException
-                // before calling Stripe
-
-                // Expect ProviderException because 0.50 < 4.00
                 IllegalPaymentOperationException exception = Assertions
                                 .assertThrows(
                                                 IllegalPaymentOperationException.class,
-                                                () -> transactionService.preparePayment(firebaseUser, 100));
+                                                () -> transactionService.createTransaction(createRequest));
 
-                assertEquals(
-                                "Transaction amount too low for payment provider",
-                                exception.getMessage());
+                assertTrue(exception.getMessage().contains("falls below minimum payment amount"));
         }
 }
