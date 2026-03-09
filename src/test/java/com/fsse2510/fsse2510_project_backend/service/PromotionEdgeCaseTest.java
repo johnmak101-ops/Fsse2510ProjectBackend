@@ -161,6 +161,6 @@ class PromotionEdgeCaseTest {
 
         assertNotNull(result);
         // Should pick membership promo due to tie-breaker logic
-        assertEquals("GOLD+ EXCLUSIVE", result.getPromotionBadgeText());
+        assertTrue(result.getPromotionBadgeTexts().contains("GOLD+ EXCLUSIVE"));
     }
 }

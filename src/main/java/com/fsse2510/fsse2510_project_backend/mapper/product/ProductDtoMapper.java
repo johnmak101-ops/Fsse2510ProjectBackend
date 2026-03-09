@@ -1,10 +1,14 @@
 package com.fsse2510.fsse2510_project_backend.mapper.product;
 
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductAttributesData;
+import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductImageResponseData;
+import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductInventoryResponseData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductResponseData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductSummaryData;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductAttributesResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductDetailResponseDto;
+import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductImageResponseDto;
+import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductInventoryResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductSummaryResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionData;
@@ -26,21 +30,19 @@ public interface ProductDtoMapper {
     @Mapping(target = "status", source = "status")
     ProductResponseDto toResponseDto(ProductResponseData data);
 
-    // Summary DTO for list views
     @Mapping(target = "newlyAdded", source = "isNew")
     @Mapping(target = "onSale", source = "isSale")
     @Mapping(target = "featured", source = "isFeatured")
     @Mapping(target = "hasStock", source = "hasStock")
     @Mapping(target = "stock", source = "stock")
     @Mapping(target = "productType", source = "productType")
+    @Mapping(target = "appliedPromotionId", ignore = true)
     ProductSummaryResponseDto toSummaryResponseDto(ProductSummaryData data);
 
-    // Detail View: Full info
     @Mapping(target = "hasStock", expression = "java(data.getStock() != null && data.getStock() > 0)")
     @Mapping(target = "newlyAdded", source = "isNew")
     @Mapping(target = "onSale", source = "isSale")
     @Mapping(target = "featured", source = "isFeatured")
-
     @Mapping(target = "slug", source = "slug")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "shopifyId", source = "shopifyId")
@@ -55,6 +57,12 @@ public interface ProductDtoMapper {
     @Mapping(target = "images", source = "images")
     @Mapping(target = "details", source = "details")
     ProductDetailResponseDto toDetailResponseDto(ProductResponseData data);
+
+    @Mapping(target = "id", ignore = true)
+    ProductInventoryResponseDto toInventoryDto(ProductInventoryResponseData data);
+
+    @Mapping(target = "id", ignore = true)
+    ProductImageResponseDto toImageDto(ProductImageResponseData data);
 
     ProductAttributesResponseDto toAttributesResponseDto(ProductAttributesData data);
 

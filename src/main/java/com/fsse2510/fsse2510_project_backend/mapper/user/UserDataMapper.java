@@ -13,6 +13,15 @@ public interface UserDataMapper {
 
     UpdateUserProfileRequestData toUpdateData(UpdateUserProfileRequestDto dto);
 
+    @Mapping(target = "uid", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "firebaseUid", ignore = true)
+    @Mapping(target = "level", ignore = true)
+    @Mapping(target = "accumulatedSpending", ignore = true)
+    @Mapping(target = "cycleSpending", ignore = true)
+    @Mapping(target = "points", ignore = true)
+    @Mapping(target = "cycleEndDate", ignore = true)
+    @Mapping(target = "isInGracePeriod", ignore = true)
     void updateEntity(UpdateUserProfileRequestData data, @MappingTarget UserEntity entity);
 
     @Mapping(target = "membership", ignore = true)

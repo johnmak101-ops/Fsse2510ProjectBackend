@@ -9,6 +9,9 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface TransactionProductDataMapper {
+    @Mapping(target = "originalPrice", ignore = true)
+    @Mapping(target = "discountAmount", ignore = true)
+    @Mapping(target = "discountPercentage", ignore = true)
     TransactionProductResponseData toData(TransactionProductEntity entity);
 
     @Mapping(target = "tpid", ignore = true)

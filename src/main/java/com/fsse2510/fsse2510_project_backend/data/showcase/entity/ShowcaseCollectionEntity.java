@@ -38,5 +38,6 @@ public class ShowcaseCollectionEntity {
     private Integer orderIndex;
 
     @Column(nullable = false)
+    @Builder.Default
     private boolean active = true;
 }

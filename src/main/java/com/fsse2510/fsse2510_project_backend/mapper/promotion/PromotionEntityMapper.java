@@ -4,16 +4,15 @@ import com.fsse2510.fsse2510_project_backend.data.promotion.domainObject.request
 import com.fsse2510.fsse2510_project_backend.data.promotion.domainObject.request.UpdatePromotionRequestData;
 import com.fsse2510.fsse2510_project_backend.data.promotion.entity.PromotionEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring")
 public interface PromotionEntityMapper {
 
-    // Create
+    @Mapping(target = "id", ignore = true)
     PromotionEntity toEntity(CreatePromotionRequestData data);
 
-    // Update [New]
-    // Use @MappingTarget to update the existing Entity from the database with Data
-    // values
+    @Mapping(target = "id", ignore = true)
     void updateEntity(UpdatePromotionRequestData data, @MappingTarget PromotionEntity entity);
 }

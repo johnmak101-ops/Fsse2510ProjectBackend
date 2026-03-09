@@ -53,15 +53,18 @@ public class TransactionEntity {
     private BigDecimal total;
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<TransactionProductEntity> items = new ArrayList<>();
 
     @Column(name = "used_points")
+    @Builder.Default
     private Integer usedPoints = 0;
 
     @Column(name = "coupon_code")
     private String couponCode;
 
     @Column(name = "earned_points")
+    @Builder.Default
     private BigDecimal earnedPoints = BigDecimal.ZERO;
 
     @Column(name = "stripe_payment_intent_id")
