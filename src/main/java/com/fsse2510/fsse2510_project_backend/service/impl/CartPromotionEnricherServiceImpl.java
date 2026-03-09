@@ -540,7 +540,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
                 // itemDiscountTotal refers to the total amount to take off this cart item
                 // group.
                 // We divide it evenly amongst all qty in this line item.
-                BigDecimal singleUnitDiscount = itemDiscountTotal.divide(BigDecimal.valueOf(qty), 2,
+                BigDecimal singleUnitDiscount = itemDiscountTotal.divide(BigDecimal.valueOf(qty), 10,
                         RoundingMode.HALF_UP);
                 additiveApplyPricing(item, baseUnitPrice, singleUnitDiscount, promo);
             } else {
@@ -550,7 +550,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
 
                 // Divide the final discounted total by the quantity to get the discounted
                 // single unit price
-                BigDecimal newUnitPrice = newItemTotal.divide(BigDecimal.valueOf(qty), 2, RoundingMode.HALF_UP);
+                BigDecimal newUnitPrice = newItemTotal.divide(BigDecimal.valueOf(qty), 10, RoundingMode.HALF_UP);
 
                 // Mutate the item state to reflect the promotion
                 applyPricing(item, baseUnitPrice, newUnitPrice, promo);
