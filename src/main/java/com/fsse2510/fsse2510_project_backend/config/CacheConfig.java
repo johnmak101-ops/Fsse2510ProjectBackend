@@ -50,17 +50,17 @@ public class CacheConfig {
         public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(
                         RedisCacheConfiguration cacheConfiguration) {
                 return (builder) -> builder
-                                .withCacheConfiguration("product_v4",
+                                .withCacheConfiguration("product_v5",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_recommendations_v4",
+                                .withCacheConfiguration("product_recommendations_v5",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_showcase_v1",
+                                .withCacheConfiguration("product_showcase_v2",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_attributes_v4",
+                                .withCacheConfiguration("product_attributes_v5",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(12)))
-                                .withCacheConfiguration("navigation_v1",
+                                .withCacheConfiguration("navigation_v2",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(24)))
-                                .withCacheConfiguration("showcase_collections_v1",
+                                .withCacheConfiguration("showcase_collections_v2",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(12)));
         }
 }
