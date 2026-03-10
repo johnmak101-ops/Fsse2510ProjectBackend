@@ -16,11 +16,13 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 /**
  * Redis Cache configuration.
  * Default: 60 min TTL, no null caching, JSON serialization.
- * Per-cache overrides inherit the default JSON serializer and only customise TTL.
+ * Per-cache overrides inherit the default JSON serializer and only customise
+ * TTL.
  *
  * When providing a custom ObjectMapper to GenericJackson2JsonRedisSerializer,
  * activateDefaultTyping must be enabled so that @class type info is serialized.
- * Without it, deserialization defaults to LinkedHashMap and causes ClassCastException.
+ * Without it, deserialization defaults to LinkedHashMap and causes
+ * ClassCastException.
  */
 @Configuration
 public class CacheConfig {
@@ -32,7 +34,7 @@ public class CacheConfig {
                 mapper.activateDefaultTyping(
                                 mapper.getPolymorphicTypeValidator(),
                                 ObjectMapper.DefaultTyping.NON_FINAL,
-                                JsonTypeInfo.As.PROPERTY);
+                                JsonTypeInfo.As.WRAPPER_ARRAY);
 
                 return RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(60))
