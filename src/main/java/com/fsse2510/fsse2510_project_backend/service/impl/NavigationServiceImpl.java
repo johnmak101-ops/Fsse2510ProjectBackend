@@ -37,7 +37,7 @@ public class NavigationServiceImpl implements NavigationService {
     private final SystemConfigRepository systemConfigRepository;
     private final NavigationItemEntityMapper navigationItemEntityMapper;
 
-    private static final String CACHE_NAVIGATION = "navigation_v2";
+    private static final String CACHE_NAVIGATION = "navigation_v3";
 
     @Override
     @Transactional

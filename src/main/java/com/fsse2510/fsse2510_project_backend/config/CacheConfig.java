@@ -4,15 +4,9 @@ import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCust
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
-import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.time.Duration;
-
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
  * Redis Cache configuration.
@@ -30,37 +24,28 @@ public class CacheConfig {
 
         @Bean
         public RedisCacheConfiguration cacheConfiguration() {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.registerModule(new JavaTimeModule());
-                mapper.activateDefaultTyping(
-                                mapper.getPolymorphicTypeValidator(),
-                                ObjectMapper.DefaultTyping.NON_FINAL,
-                                JsonTypeInfo.As.WRAPPER_ARRAY);
-
-                RedisSerializer<Object> jsonSerializer = new GenericJackson2JsonRedisSerializer(mapper);
-
                 return RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(60))
                                 .disableCachingNullValues()
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                                                .fromSerializer(jsonSerializer));
+                                                .fromSerializer(new org.springframework.data.redis.serializer.JdkSerializationRedisSerializer()));
         }
 
         @Bean
         public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(
                         RedisCacheConfiguration cacheConfiguration) {
                 return (builder) -> builder
-                                .withCacheConfiguration("product_v5",
+                                .withCacheConfiguration("product_v6",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_recommendations_v5",
+                                .withCacheConfiguration("product_recommendations_v6",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_showcase_v2",
+                                .withCacheConfiguration("product_showcase_v3",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_attributes_v5",
+                                .withCacheConfiguration("product_attributes_v6",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(12)))
-                                .withCacheConfiguration("navigation_v2",
+                                .withCacheConfiguration("navigation_v3",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(24)))
-                                .withCacheConfiguration("showcase_collections_v2",
+                                .withCacheConfiguration("showcase_collections_v3",
                                                 cacheConfiguration.entryTtl(Duration.ofHours(12)));
         }
 }

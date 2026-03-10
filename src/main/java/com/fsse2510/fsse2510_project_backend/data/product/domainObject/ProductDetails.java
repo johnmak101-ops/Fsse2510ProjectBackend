@@ -1,6 +1,8 @@
 package com.fsse2510.fsse2510_project_backend.data.product.domainObject;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.io.Serial;
+import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ProductDetails {
+public class ProductDetails implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private String story;
     private String productIntro;
     private String fabricInfo;
