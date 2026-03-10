@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-import static java.math.RoundingMode.HALF_UP;
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 
 @Service
 public class StripeServiceImpl implements StripeService {
@@ -48,7 +48,7 @@ public class StripeServiceImpl implements StripeService {
                                             SessionCreateParams.LineItem.PriceData.builder()
                                                     .setCurrency(stripeCurrency)
                                                     .setUnitAmount(total.multiply(BigDecimal.valueOf(100))
-                                                            .setScale(0, HALF_UP).longValue())
+                                                            .setScale(0, MONEY_ROUNDING).longValue())
                                                     .setProductData(
                                                             SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                                                     .setName("Order #" + tid)

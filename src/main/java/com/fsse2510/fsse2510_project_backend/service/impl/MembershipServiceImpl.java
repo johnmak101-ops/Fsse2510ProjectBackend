@@ -10,6 +10,8 @@ import com.fsse2510.fsse2510_project_backend.mapper.membership.MembershipConfigE
 import com.fsse2510.fsse2510_project_backend.repository.MembershipConfigRepository;
 import com.fsse2510.fsse2510_project_backend.service.MembershipService;
 import com.fsse2510.fsse2510_project_backend.util.BusinessConstants;
+
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 import jakarta.annotation.PostConstruct;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -139,8 +140,6 @@ public class MembershipServiceImpl implements MembershipService {
 
     private void renewMembership(UserEntity user) {
         user.setCycleEndDate(LocalDate.now().plusYears(1));
-        // user.setAccumulatedSpending(BigDecimal.ZERO); // Removed: Keep as lifetime
-        // accumulated spending
         user.setCycleSpending(BigDecimal.ZERO); // [Fix] Reset annual accumulated spending
         user.setPoints(BigDecimal.ZERO); // Reset annual points
         user.setIsInGracePeriod(false);
@@ -196,7 +195,7 @@ public class MembershipServiceImpl implements MembershipService {
                 .multiply(BigDecimal
                         .valueOf(BusinessConstants.POINTS_TO_DOLLAR_RATE))
                 .setScale(BusinessConstants.MONEY_SCALE,
-                        RoundingMode.HALF_UP);
+                        MONEY_ROUNDING);
     }
 
     // === 3. Upgrade Check ===

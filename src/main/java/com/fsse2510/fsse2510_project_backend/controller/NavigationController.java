@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.security.access.prepost.PreAuthorize;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,7 +78,7 @@ public class NavigationController {
      */
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/navigation")
-    public NavigationItemResponseDto createItem(@RequestBody CreateNavigationItemRequestDto createDto) {
+    public NavigationItemResponseDto createItem(@RequestBody @Valid CreateNavigationItemRequestDto createDto) {
         CreateNavigationItemRequestData createData = navigationItemDtoMapper.toCreateRequestData(createDto);
         NavigationItemData result = navigationService.createItem(createData);
         return navigationItemDtoMapper.toResponseDto(result);
@@ -97,7 +98,7 @@ public class NavigationController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/admin/navigation/{id}")
     public NavigationItemResponseDto updateItem(@PathVariable Integer id,
-            @RequestBody UpdateNavigationItemRequestDto updateDto) {
+            @RequestBody @Valid UpdateNavigationItemRequestDto updateDto) {
         UpdateNavigationItemRequestData updateData = navigationItemDtoMapper.toUpdateRequestData(id, updateDto);
         NavigationItemData result = navigationService.updateItem(updateData);
         return navigationItemDtoMapper.toResponseDto(result);

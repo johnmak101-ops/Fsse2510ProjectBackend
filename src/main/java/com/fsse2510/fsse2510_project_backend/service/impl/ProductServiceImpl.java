@@ -56,7 +56,6 @@ public class ProductServiceImpl implements ProductService {
     private final ProductPromotionEnricherService productPromotionEnricherService;
     private final ProductSpecificationBuilder specificationBuilder;
 
-
     // Slice: For infinite scroll function in frontend
     // @Transaction(readOnly = true), skip dirty check and read only
     // Pageable, not to return all 6xx products
@@ -75,8 +74,6 @@ public class ProductServiceImpl implements ProductService {
         return SliceResponseDto.of(content, pidSlice.hasNext());
     }
 
-    // @Cacheable(value = CACHE_PRODUCT, key = "#pid", sync = true) Lock DB, Prevent Cache Stampede
-    // Sac
     @Override
     @Transactional(readOnly = true)
     @Cacheable(value = CACHE_PRODUCT, key = "#pid", sync = true)

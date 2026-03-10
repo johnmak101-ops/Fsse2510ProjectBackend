@@ -14,11 +14,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 /**
- * Redis Cache configuration(see baeldung.com/spring-boot-redis-cache)
- * Default: 60mins, no null cache, and view Redis JSON for debug use
- * Customizer: product_attributes -> Size, Color,...
+ * Redis Cache configuration.
+ * Default: 60 min TTL, no null caching, JSON serialization.
+ * Per-cache overrides inherit the default JSON serializer and only customise TTL.
  */
-
 @Configuration
 public class CacheConfig {
 
@@ -31,35 +30,27 @@ public class CacheConfig {
                                 JsonTypeInfo.As.PROPERTY);
 
                 return RedisCacheConfiguration.defaultCacheConfig()
-                                .entryTtl(Duration.ofMinutes(60)) // Default TTL 1 hour
+                                .entryTtl(Duration.ofMinutes(60))
                                 .disableCachingNullValues()
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
                                                 .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)));
         }
 
         @Bean
-        public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
+        public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer(
+                        RedisCacheConfiguration cacheConfiguration) {
                 return (builder) -> builder
-                                .withCacheConfiguration("product",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_recommendations",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_showcase",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(1)))
+                                .withCacheConfiguration("product_v4",
+                                                cacheConfiguration.entryTtl(Duration.ofHours(1)))
+                                .withCacheConfiguration("product_recommendations_v4",
+                                                cacheConfiguration.entryTtl(Duration.ofHours(1)))
                                 .withCacheConfiguration("product_showcase_v1",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(1)))
-                                .withCacheConfiguration("product_attributes",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(12)))
+                                                cacheConfiguration.entryTtl(Duration.ofHours(1)))
+                                .withCacheConfiguration("product_attributes_v4",
+                                                cacheConfiguration.entryTtl(Duration.ofHours(12)))
                                 .withCacheConfiguration("navigation_v1",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(24)))
+                                                cacheConfiguration.entryTtl(Duration.ofHours(24)))
                                 .withCacheConfiguration("showcase_collections_v1",
-                                                RedisCacheConfiguration.defaultCacheConfig()
-                                                                .entryTtl(Duration.ofHours(12)));
+                                                cacheConfiguration.entryTtl(Duration.ofHours(12)));
         }
 }

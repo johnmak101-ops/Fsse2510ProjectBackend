@@ -1,5 +1,6 @@
 package com.fsse2510.fsse2510_project_backend.data.product.dto.request;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -46,6 +47,6 @@ public class UpdateProductRequestDto {
     private String designStyling;
     private String colorDisclaimer;
     private List<String> tags;
-    private List<ProductImageRequestDto> images;
-    private List<ProductInventoryRequestDto> inventories;
+    private List<@Valid ProductImageRequestDto> images;
+    private List<@Valid ProductInventoryRequestDto> inventories;
 }

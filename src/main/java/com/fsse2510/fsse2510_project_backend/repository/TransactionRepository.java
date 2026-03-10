@@ -32,6 +32,9 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
         @Query("SELECT SUM(tp.quantity) FROM TransactionEntity t JOIN t.items tp WHERE tp.sku = :sku AND t.status IN :statuses")
         Long sumPendingQuantityBySku(@Param("sku") String sku, @Param("statuses") Collection<PaymentStatus> statuses);
 
+        @Query("SELECT tp.sku, SUM(tp.quantity) FROM TransactionEntity t JOIN t.items tp WHERE tp.sku IN :skus AND t.status IN :statuses GROUP BY tp.sku")
+        List<Object[]> sumPendingQuantityBySkuIn(@Param("skus") Collection<String> skus, @Param("statuses") Collection<PaymentStatus> statuses);
+
         @Query("SELECT SUM(t.usedPoints) FROM TransactionEntity t WHERE t.user.uid = :uid AND t.status IN :statuses")
         Long sumPendingPointsByUser(@Param("uid") Integer uid, @Param("statuses") Collection<PaymentStatus> statuses);
 

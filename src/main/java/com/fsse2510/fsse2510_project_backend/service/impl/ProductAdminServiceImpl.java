@@ -36,7 +36,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductAdminServiceImpl implements ProductAdminService {
 
-    private static final String CACHE_PRODUCT = "product_vv4";
+    private static final String CACHE_PRODUCT = "product_v4";
+    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v4";
+    private static final String CACHE_ATTRIBUTES = "product_attributes_v4";
+    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v1";
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -62,6 +65,7 @@ public class ProductAdminServiceImpl implements ProductAdminService {
         }
 
         ProductEntity saved = productRepository.save(entity);
+        evictProductCache(saved);
         return productDataMapper.toResponseData(saved);
     }
 
@@ -230,6 +234,16 @@ public class ProductAdminServiceImpl implements ProductAdminService {
             cache.evict(product.getPid());
             if (product.getSlug() != null) {
                 cache.evict(product.getSlug());
+            }
+        }
+        clearCollectionCaches();
+    }
+
+    private void clearCollectionCaches() {
+        for (String name : List.of(CACHE_RECOMMENDATIONS, CACHE_ATTRIBUTES, CACHE_SHOWCASE_PRODUCTS)) {
+            Cache c = cacheManager.getCache(name);
+            if (c != null) {
+                c.clear();
             }
         }
     }

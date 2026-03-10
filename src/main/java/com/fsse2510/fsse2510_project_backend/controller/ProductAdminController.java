@@ -45,7 +45,7 @@ public class ProductAdminController {
 
         @PatchMapping("/{id}/metadata")
         public ProductDetailResponseDto updateProductMetadata(@PathVariable Integer id,
-                        @RequestBody UpdateProductMetadataRequestDto requestDto) {
+                        @RequestBody @Valid UpdateProductMetadataRequestDto requestDto) {
                 return productDtoMapper.toDetailResponseDto(
                                 productAdminService.updateProductMetadata(id,
                                                 productDataMapper.toProductDetails(requestDto)));

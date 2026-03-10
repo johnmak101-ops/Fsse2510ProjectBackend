@@ -32,6 +32,9 @@ import com.fsse2510.fsse2510_project_backend.service.StripeService;
 import com.fsse2510.fsse2510_project_backend.service.TransactionService;
 import com.fsse2510.fsse2510_project_backend.service.UserService;
 import com.fsse2510.fsse2510_project_backend.util.BusinessConstants;
+
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.POINTS_ROUNDING;
 import com.stripe.model.PaymentIntent;
 import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
@@ -43,10 +46,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -208,7 +212,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public void finishTransactionFromStripeWebhook(String firebaseUid, Integer tid, String intentId,
-                                                   Long amount, String currency) {
+            Long amount, String currency) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
             return;
@@ -223,7 +227,7 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional
     public void finishTransactionFromStripeCheckout(String firebaseUid, Integer tid,
-                                                    String intentId) {
+            String intentId) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUid, tid);
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
             return;
@@ -334,7 +338,7 @@ public class TransactionServiceImpl implements TransactionService {
         if (!session.getClientReferenceId().equals(transaction.getTid().toString())) {
             throw new IllegalPaymentOperationException("Invalid Session ID");
         }
-        String sessionUid = session.getMetadata().get("uid");
+        String sessionUid = session.getMetadata() != null ? session.getMetadata().get("uid") : null;
         if (sessionUid != null && !sessionUid.equals(firebaseUser.getFirebaseUid())) {
             throw new IllegalPaymentOperationException("Invalid Session User");
         }
@@ -376,8 +380,13 @@ public class TransactionServiceImpl implements TransactionService {
     private BigDecimal processTransactionItems(TransactionEntity transaction, List<CartItemResponseData> cartItems) {
         BigDecimal total = BigDecimal.ZERO;
         List<TransactionProductEntity> items = new ArrayList<>();
+
+        List<String> skus = cartItems.stream().map(CartItemResponseData::getSku).toList();
+        Map<String, Long> pendingQtyMap = fetchPendingQuantities(skus);
+
         for (CartItemResponseData item : cartItems) {
-            long virtualStock = getVirtualStock(item.getSku(), item.getStock());
+            long pending = pendingQtyMap.getOrDefault(item.getSku(), 0L);
+            long virtualStock = Math.max(0, item.getStock() - pending);
             if (item.getCartQuantity() > virtualStock) {
                 logger.warn(
                         "Pre-Payment Stock Check Failed (Virtual): Item {} (SKU: {}) requested {}, but virtual stock is {}.",
@@ -417,7 +426,7 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal discount;
         if (coupon.getDiscountType() == DiscountType.PERCENTAGE) {
             discount = scaleAmount(currentTotal.multiply(
-                    coupon.getDiscountValue().divide(BigDecimal.valueOf(100), MONEY_SCALE, RoundingMode.HALF_UP)));
+                    coupon.getDiscountValue().divide(BigDecimal.valueOf(100), MONEY_SCALE, MONEY_ROUNDING)));
         } else {
             discount = scaleAmount(coupon.getDiscountValue());
         }
@@ -442,7 +451,7 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal pointsRequested = BigDecimal.valueOf(usePoints).min(virtualPoints);
         BigDecimal actualDiscount = calculatePointsDiscount(pointsRequested, virtualPoints, currentTotal);
         int pointsActuallyUsed = actualDiscount.multiply(BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE))
-                .setScale(0, RoundingMode.CEILING).intValue();
+                .setScale(0, POINTS_ROUNDING).intValue();
 
         transaction.setUsedPoints(pointsActuallyUsed);
         return scaleAmount(currentTotal.subtract(actualDiscount));
@@ -451,9 +460,9 @@ public class TransactionServiceImpl implements TransactionService {
     private BigDecimal calculatePointsDiscount(BigDecimal pointsRequested, BigDecimal virtualPoints,
             BigDecimal currentTotal) {
         BigDecimal discountValue = pointsRequested.divide(
-                BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE), MONEY_SCALE, RoundingMode.HALF_UP);
+                BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE), MONEY_SCALE, MONEY_ROUNDING);
         BigDecimal maxDiscount = virtualPoints.divide(
-                BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE), MONEY_SCALE, RoundingMode.HALF_UP).min(currentTotal);
+                BigDecimal.valueOf(POINTS_TO_DOLLAR_RATE), MONEY_SCALE, MONEY_ROUNDING).min(currentTotal);
         return scaleAmount(discountValue.min(maxDiscount));
     }
 
@@ -490,10 +499,15 @@ public class TransactionServiceImpl implements TransactionService {
         transaction.setPostalCode(address.getPostalCode());
     }
 
-    private long getVirtualStock(String sku, int currentStock) {
-        Long pendingQty = transactionRepository.sumPendingQuantityBySku(sku, ACTIVE_PENDING_STATUSES);
-        long pending = (pendingQty != null) ? pendingQty : 0L;
-        return Math.max(0, currentStock - pending);
+    private Map<String, Long> fetchPendingQuantities(List<String> skus) {
+        if (skus.isEmpty()) {
+            return Map.of();
+        }
+        return transactionRepository.sumPendingQuantityBySkuIn(skus, ACTIVE_PENDING_STATUSES)
+                .stream()
+                .collect(Collectors.toMap(
+                        row -> (String) row[0],
+                        row -> ((Number) row[1]).longValue()));
     }
 
     private BigDecimal getVirtualPoints(Integer uid, BigDecimal currentPoints) {
@@ -503,6 +517,6 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     private BigDecimal scaleAmount(BigDecimal amount) {
-        return amount.setScale(MONEY_SCALE, RoundingMode.HALF_UP);
+        return amount.setScale(MONEY_SCALE, MONEY_ROUNDING);
     }
 }

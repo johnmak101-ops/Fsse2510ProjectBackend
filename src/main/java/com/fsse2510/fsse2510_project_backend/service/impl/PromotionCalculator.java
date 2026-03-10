@@ -6,7 +6,8 @@ import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.Promot
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 
 @Service
 public class PromotionCalculator {
@@ -27,7 +28,7 @@ public class PromotionCalculator {
                 // (originalPrice * getY) / cycle
                 BigDecimal freeUnits = BigDecimal.valueOf(getY);
                 return originalPrice.multiply(freeUnits)
-                        .divide(BigDecimal.valueOf(cycle), 4, RoundingMode.HALF_UP);
+                        .divide(BigDecimal.valueOf(cycle), 4, MONEY_ROUNDING);
             }
             return BigDecimal.ZERO;
         }
@@ -39,7 +40,7 @@ public class PromotionCalculator {
         if (promo.getDiscountType() == DiscountType.PERCENTAGE) {
             // discountValue = 20 means 20% discount amount
             return originalPrice.multiply(
-                    promo.getDiscountValue().divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP));
+                    promo.getDiscountValue().divide(BigDecimal.valueOf(100), 4, MONEY_ROUNDING));
         } else if (promo.getDiscountType() == DiscountType.FIXED) {
             return promo.getDiscountValue();
         }
@@ -54,11 +55,11 @@ public class PromotionCalculator {
         return switch (promo.getDiscountType()) {
             case PERCENTAGE -> {
                 BigDecimal discountFactor = BigDecimal.valueOf(100).subtract(promo.getDiscountValue())
-                        .divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
-                yield originalPrice.multiply(discountFactor).setScale(2, RoundingMode.HALF_UP);
+                        .divide(BigDecimal.valueOf(100), 4, MONEY_ROUNDING);
+                yield originalPrice.multiply(discountFactor).setScale(2, MONEY_ROUNDING);
             }
             case FIXED -> originalPrice.subtract(promo.getDiscountValue()).max(BigDecimal.ZERO).setScale(2,
-                    RoundingMode.HALF_UP);
+                    MONEY_ROUNDING);
         };
     }
 
@@ -76,7 +77,7 @@ public class PromotionCalculator {
 
         String discountStr = "";
         if (promotion.getDiscountType() == DiscountType.PERCENTAGE && promotion.getDiscountValue() != null) {
-            discountStr = String.format("%d%% OFF", promotion.getDiscountValue().intValue());
+            discountStr = String.format("%s%% OFF", promotion.getDiscountValue().stripTrailingZeros().toPlainString());
         } else if (promotion.getDiscountType() == DiscountType.FIXED && promotion.getDiscountValue() != null) {
             discountStr = String.format("$%s OFF", promotion.getDiscountValue().stripTrailingZeros().toPlainString());
         }

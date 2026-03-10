@@ -30,7 +30,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static java.math.RoundingMode.HALF_UP;
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 
 /*
  * Service responsible for enriching product data (ProductResponseData,
@@ -282,7 +282,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         BigDecimal promotionalPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, bestPromo);
         BigDecimal discountAmount = originalPrice.subtract(promotionalPrice);
         BigDecimal discountPercentage = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? discountAmount.divide(originalPrice, 4, HALF_UP)
+                ? discountAmount.divide(originalPrice, 4, MONEY_ROUNDING)
                 : BigDecimal.ZERO;
 
         dto.setOriginalPrice(originalPrice);

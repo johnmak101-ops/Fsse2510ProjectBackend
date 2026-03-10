@@ -18,7 +18,6 @@ public class MembershipController {
     private final MembershipService membershipService;
     private final MembershipConfigDtoMapper membershipConfigDtoMapper;
 
-    // TODO: Display membership tiers for customers
     @GetMapping("/tiers")
     public List<MembershipConfigResponseDto> getAllMembershipTiers() {
         return membershipService.getAllConfigs().stream()

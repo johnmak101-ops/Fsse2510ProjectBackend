@@ -156,6 +156,8 @@ public class PromotionServiceImpl implements PromotionService {
         product.setPromotion(promotion);
         productRepository.save(product);
         logger.info("Assigned Promotion ID={} to Product ID={}", promoId, pid);
+
+        registerCacheClearAfterCommit();
     }
 
     private void registerCacheClearAfterCommit() {

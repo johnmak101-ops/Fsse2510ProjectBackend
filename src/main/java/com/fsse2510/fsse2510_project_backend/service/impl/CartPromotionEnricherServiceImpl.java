@@ -17,7 +17,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+
+import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -165,7 +166,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
             BigDecimal newPrice, PromotionEntity promo) {
         BigDecimal discountAmount = originalPrice.subtract(newPrice);
         BigDecimal discountPct = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? discountAmount.divide(originalPrice, 4, RoundingMode.HALF_UP)
+                ? discountAmount.divide(originalPrice, 4, MONEY_ROUNDING)
                 : BigDecimal.ZERO;
 
         item.setPrice(newPrice);
@@ -196,7 +197,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
 
         // Recalculate percentage based on original price
         BigDecimal newDiscountPct = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? newDiscountAmount.divide(originalPrice, 4, RoundingMode.HALF_UP)
+                ? newDiscountAmount.divide(originalPrice, 4, MONEY_ROUNDING)
                 : BigDecimal.ZERO;
 
         item.setPrice(newNetPrice);
@@ -529,7 +530,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
                 // actualDiscountToApply
                 // Multiply first, divide last — preserves precision.
                 itemDiscountTotal = itemTotalBase.multiply(actualDiscountToApply)
-                        .divide(totalQualifyingAmount, 2, RoundingMode.HALF_UP);
+                        .divide(totalQualifyingAmount, 2, MONEY_ROUNDING);
 
                 // Keep track of how much discount we've handed out so far
                 distributedDiscount = distributedDiscount.add(itemDiscountTotal);
@@ -541,7 +542,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
                 // group.
                 // We divide it evenly amongst all qty in this line item.
                 BigDecimal singleUnitDiscount = itemDiscountTotal.divide(BigDecimal.valueOf(qty), 10,
-                        RoundingMode.HALF_UP);
+                        MONEY_ROUNDING);
                 additiveApplyPricing(item, baseUnitPrice, singleUnitDiscount, promo);
             } else {
                 // 5. Calculate new unit price
@@ -550,7 +551,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
 
                 // Divide the final discounted total by the quantity to get the discounted
                 // single unit price
-                BigDecimal newUnitPrice = newItemTotal.divide(BigDecimal.valueOf(qty), 10, RoundingMode.HALF_UP);
+                BigDecimal newUnitPrice = newItemTotal.divide(BigDecimal.valueOf(qty), 10, MONEY_ROUNDING);
 
                 // Mutate the item state to reflect the promotion
                 applyPricing(item, baseUnitPrice, newUnitPrice, promo);
@@ -608,7 +609,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
                     BigDecimal oldTotal = unitPrice.multiply(BigDecimal.valueOf(qty));
                     BigDecimal freeAmount = unitPrice.multiply(BigDecimal.valueOf(reduceCount));
                     BigDecimal newUnitPrice = oldTotal.subtract(freeAmount)
-                            .divide(BigDecimal.valueOf(qty), 2, RoundingMode.HALF_UP);
+                            .divide(BigDecimal.valueOf(qty), 10, MONEY_ROUNDING);
 
                     // Only apply if better than current price
                     if (newUnitPrice.compareTo(item.getPrice()) < 0) {

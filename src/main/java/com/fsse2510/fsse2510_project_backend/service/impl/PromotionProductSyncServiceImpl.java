@@ -101,10 +101,13 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
     public void removePromotionFromProductsSync(Integer promotionId) {
         logger.info("Starting sync removal of promotion: id={}", promotionId);
 
-        // Single bulk JPQL UPDATE — clears promotion, isSale and badge in one SQL
-        // statement
-        // This replaces the previous N+1 pattern (load all products + saveAll each)
-        productRepository.clearPromotionFromProducts(promotionId);
+        List<PromotionEntity> activePromotions = promotionRepository
+                .findActivePromotions(LocalDateTime.now())
+                .stream()
+                .filter(p -> !p.getId().equals(promotionId))
+                .toList();
+
+        removePromotionFromProductsSync(promotionId, activePromotions);
 
         clearProductCache();
         logger.info("Completed sync removal of promotion: id={}", promotionId);
@@ -208,8 +211,8 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
         return existingDiscount.compareTo(newDiscount) > 0;
     }
 
-    @CacheEvict(value = { "product_v4", "product_summaries_v4", "product_recommendations_v4",
-            "product_showcase_v4", "product_showcase_v1" }, allEntries = true)
+    @CacheEvict(value = { "product_v4", "product_recommendations_v4",
+            "product_attributes_v4", "product_showcase_v1" }, allEntries = true)
     public void clearProductCache() {
         logger.debug("Cleared product cache");
     }
