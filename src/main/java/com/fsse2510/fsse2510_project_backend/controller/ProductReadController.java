@@ -33,6 +33,9 @@ public class ProductReadController {
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
                 SliceResponseDto<ProductSummaryData> slice = productService.getAllProducts(page, size);
+                if (slice == null || slice.getContent() == null) {
+                        return SliceResponseDto.of(List.of(), false);
+                }
                 return SliceResponseDto.of(
                                 slice.getContent().stream()
                                                 .map(productDtoMapper::toSummaryResponseDto)
@@ -59,6 +62,9 @@ public class ProductReadController {
                         @RequestParam(defaultValue = "12") int limit) {
                 SliceResponseDto<ProductSummaryData> slice = productService
                                 .getRelatedProducts(category, currentPid, limit);
+                if (slice == null || slice.getContent() == null) {
+                        return SliceResponseDto.of(List.of(), false);
+                }
                 return SliceResponseDto.of(
                                 slice.getContent().stream()
                                                 .map(productDtoMapper::toSummaryResponseDto)
@@ -71,6 +77,9 @@ public class ProductReadController {
                         @RequestParam(defaultValue = "12") int limit) {
                 SliceResponseDto<ProductSummaryData> slice = productService
                                 .getShowcaseProducts(limit);
+                if (slice == null || slice.getContent() == null) {
+                        return SliceResponseDto.of(List.of(), false);
+                }
                 return SliceResponseDto.of(
                                 slice.getContent().stream()
                                                 .map(productDtoMapper::toSummaryResponseDto)
@@ -85,6 +94,9 @@ public class ProductReadController {
                         @RequestParam(defaultValue = "4") int limit) {
                 SliceResponseDto<ProductSummaryData> slice = productService.getYouMayAlsoLike(collection, currentPid,
                                 limit);
+                if (slice == null || slice.getContent() == null) {
+                        return SliceResponseDto.of(List.of(), false);
+                }
                 return SliceResponseDto.of(
                                 slice.getContent().stream()
                                                 .map(productDtoMapper::toSummaryResponseDto)
@@ -132,6 +144,10 @@ public class ProductReadController {
                                 .build();
 
                 SliceResponseDto<ProductSummaryData> slice = productService.searchProducts(criteria, page, limit);
+
+                if (slice == null || slice.getContent() == null) {
+                        return SliceResponseDto.of(List.of(), false);
+                }
 
                 return SliceResponseDto.of(
                                 slice.getContent().stream()

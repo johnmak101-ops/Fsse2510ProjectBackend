@@ -42,6 +42,8 @@ public class ProductSummaryData implements Serializable, PromotionEnrichable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ProductImageSummaryData implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
         private String url;
         private String tag;
     }

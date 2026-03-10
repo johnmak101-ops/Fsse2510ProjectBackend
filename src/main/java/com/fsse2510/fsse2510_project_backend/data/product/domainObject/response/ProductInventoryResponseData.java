@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import java.math.BigDecimal;
@@ -14,6 +15,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductInventoryResponseData implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private String sku;
     private String size;
     private String color;
