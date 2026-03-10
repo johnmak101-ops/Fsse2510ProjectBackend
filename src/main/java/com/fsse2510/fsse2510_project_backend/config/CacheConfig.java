@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.time.Duration;
 
@@ -19,10 +20,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * Per-cache overrides inherit the default JSON serializer and only customise
  * TTL.
  *
- * When providing a custom ObjectMapper to GenericJackson2JsonRedisSerializer,
- * activateDefaultTyping must be enabled so that @class type info is serialized.
- * Without it, deserialization defaults to LinkedHashMap and causes
- * ClassCastException.
+ * Uses FaultTolerantRedisSerializer to gracefully handle old cached data
+ * (e.g. serialized without @class). On deserialization failure, returns null
+ * so the cache treats it as miss and recomputes, then re-caches with the
+ * current format.
  */
 @Configuration
 public class CacheConfig {
@@ -36,11 +37,14 @@ public class CacheConfig {
                                 ObjectMapper.DefaultTyping.NON_FINAL,
                                 JsonTypeInfo.As.WRAPPER_ARRAY);
 
+                RedisSerializer<Object> jsonSerializer = new GenericJackson2JsonRedisSerializer(mapper);
+                RedisSerializer<Object> faultTolerantSerializer = new FaultTolerantRedisSerializer<>(jsonSerializer);
+
                 return RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(60))
                                 .disableCachingNullValues()
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                                                .fromSerializer(new GenericJackson2JsonRedisSerializer(mapper)));
+                                                .fromSerializer(faultTolerantSerializer));
         }
 
         @Bean
