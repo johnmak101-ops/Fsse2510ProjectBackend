@@ -22,7 +22,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,9 +43,12 @@ public class NavigationController {
     @GetMapping("/public/navigation")
     public List<NavigationItemResponseDto> getPublicNavigation() {
         List<NavigationItemData> dataList = navigationService.getPublicNavigation();
+        if (dataList == null) {
+            return List.of();
+        }
         return dataList.stream()
                 .map(navigationItemDtoMapper::toResponseDto)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

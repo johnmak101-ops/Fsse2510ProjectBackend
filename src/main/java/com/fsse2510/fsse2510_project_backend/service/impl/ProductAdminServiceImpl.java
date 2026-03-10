@@ -36,10 +36,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductAdminServiceImpl implements ProductAdminService {
 
-    private static final String CACHE_PRODUCT = "product_v4";
-    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v4";
-    private static final String CACHE_ATTRIBUTES = "product_attributes_v4";
-    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v1";
+    private static final String CACHE_PRODUCT = "product_v5";
+    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v5";
+    private static final String CACHE_ATTRIBUTES = "product_attributes_v5";
+    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v2";
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;

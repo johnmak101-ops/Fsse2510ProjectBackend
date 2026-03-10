@@ -29,7 +29,7 @@ import com.fsse2510.fsse2510_project_backend.data.product.entity.CollectionEntit
 @RequiredArgsConstructor
 public class NavigationServiceImpl implements NavigationService {
 
-    //This class is for Navbar CMS
+    // This class is for Navbar CMS
     private final NavigationItemRepository navigationItemRepository;
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -37,7 +37,7 @@ public class NavigationServiceImpl implements NavigationService {
     private final SystemConfigRepository systemConfigRepository;
     private final NavigationItemEntityMapper navigationItemEntityMapper;
 
-    private static final String CACHE_NAVIGATION = "navigation_v1";
+    private static final String CACHE_NAVIGATION = "navigation_v2";
 
     @Override
     @Transactional
@@ -135,7 +135,7 @@ public class NavigationServiceImpl implements NavigationService {
             return;
         }
 
-        //for no data in db use
+        // for no data in db use
         createRoot("WOMEN", "/collections/women", 10);
         createRoot("MEN", "/collections/men", 20);
         createRoot("PET", "/collections/pet", 30);

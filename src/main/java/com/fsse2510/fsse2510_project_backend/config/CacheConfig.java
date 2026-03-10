@@ -38,13 +38,12 @@ public class CacheConfig {
                                 JsonTypeInfo.As.WRAPPER_ARRAY);
 
                 RedisSerializer<Object> jsonSerializer = new GenericJackson2JsonRedisSerializer(mapper);
-                RedisSerializer<Object> faultTolerantSerializer = new FaultTolerantRedisSerializer<>(jsonSerializer);
 
                 return RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(60))
                                 .disableCachingNullValues()
                                 .serializeValuesWith(RedisSerializationContext.SerializationPair
-                                                .fromSerializer(faultTolerantSerializer));
+                                                .fromSerializer(jsonSerializer));
         }
 
         @Bean

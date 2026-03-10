@@ -6,6 +6,7 @@ import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductAttributesResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductDetailResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductSummaryResponseDto;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionData;
 import com.fsse2510.fsse2510_project_backend.data.showcase.dto.ShowcaseCollectionResponseDto;
 import com.fsse2510.fsse2510_project_backend.mapper.product.ProductDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.ProductService;
@@ -93,7 +94,11 @@ public class ProductReadController {
 
         @GetMapping("/showcase/collections")
         public List<ShowcaseCollectionResponseDto> getShowcaseCollections() {
-                return productService.getShowcaseCollections().stream()
+                List<ShowcaseCollectionData> collections = productService.getShowcaseCollections();
+                if (collections == null) {
+                        return List.of();
+                }
+                return collections.stream()
                                 .map(productDtoMapper::toShowcaseDto)
                                 .toList();
         }

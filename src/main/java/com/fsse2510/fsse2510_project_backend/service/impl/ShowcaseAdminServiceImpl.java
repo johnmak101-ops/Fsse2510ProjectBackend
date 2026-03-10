@@ -17,7 +17,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ShowcaseAdminServiceImpl implements ShowcaseAdminService {
 
-    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v1";
+    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v2";
 
     private final ShowcaseCollectionRepository showcaseCollectionRepository;
     private final ShowcaseEntityMapper showcaseEntityMapper;
