@@ -211,8 +211,8 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
         return existingDiscount.compareTo(newDiscount) > 0;
     }
 
-    @CacheEvict(value = { "product_v4", "product_recommendations_v4",
-            "product_attributes_v4", "product_showcase_v1" }, allEntries = true)
+    @CacheEvict(value = { "product_v5", "product_recommendations_v5",
+            "product_attributes_v5", "product_showcase_v2" }, allEntries = true)
     public void clearProductCache() {
         logger.debug("Cleared product cache");
     }
