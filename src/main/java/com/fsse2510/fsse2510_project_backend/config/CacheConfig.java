@@ -9,7 +9,6 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 
 import java.time.Duration;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -17,6 +16,11 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
  * Redis Cache configuration.
  * Default: 60 min TTL, no null caching, JSON serialization.
  * Per-cache overrides inherit the default JSON serializer and only customise TTL.
+ *
+ * Note: Do NOT use activateDefaultTyping on the ObjectMapper here.
+ * GenericJackson2JsonRedisSerializer has its own TypeResolver that handles
+ * @class type info. Adding activateDefaultTyping causes a double-wrapping
+ * conflict on deserialization.
  */
 @Configuration
 public class CacheConfig {
@@ -25,9 +29,6 @@ public class CacheConfig {
         public RedisCacheConfiguration cacheConfiguration() {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.registerModule(new JavaTimeModule());
-                mapper.activateDefaultTyping(mapper.getPolymorphicTypeValidator(),
-                                ObjectMapper.DefaultTyping.NON_FINAL,
-                                JsonTypeInfo.As.PROPERTY);
 
                 return RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(60))
