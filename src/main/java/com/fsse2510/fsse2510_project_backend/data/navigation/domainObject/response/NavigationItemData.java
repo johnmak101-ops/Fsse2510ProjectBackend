@@ -1,5 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.data.navigation.domainObject.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,6 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public class NavigationItemData implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

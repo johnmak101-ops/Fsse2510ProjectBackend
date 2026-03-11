@@ -11,6 +11,7 @@ import com.fsse2510.fsse2510_project_backend.exception.cartitem.CartItemNotFound
 import com.fsse2510.fsse2510_project_backend.exception.cartitem.InvalidQuantityException;
 import com.fsse2510.fsse2510_project_backend.exception.cartitem.NotEnoughStockException;
 import com.fsse2510.fsse2510_project_backend.exception.product.ProductNotFoundException;
+import com.fsse2510.fsse2510_project_backend.mapper.cartItem.CartItemDataMapper;
 import com.fsse2510.fsse2510_project_backend.mapper.cartItem.CartItemEntityMapper;
 import com.fsse2510.fsse2510_project_backend.repository.CartItemRepository;
 import com.fsse2510.fsse2510_project_backend.repository.ProductInventoryRepository;
@@ -35,7 +36,7 @@ import java.util.Optional;
 public class CartItemServiceImpl implements CartItemService {
 
     private static final Logger logger = LoggerFactory.getLogger(CartItemServiceImpl.class);
-    //Prevent evil input
+    // Prevent evil input
     private static final int MAX_QUANTITY_PER_ITEM = 200;
 
     private final CartItemRepository cartItemRepository;
@@ -44,6 +45,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     private final UserService userService;
     private final CartItemEntityMapper cartItemEntityMapper;
+    private final CartItemDataMapper cartItemDataMapper;
     private final ProductInventoryMapper productInventoryMapper;
     private final CartPromotionEnricherService cartPromotionEnricherService;
 
@@ -54,7 +56,7 @@ public class CartItemServiceImpl implements CartItemService {
         return getUserCart(requestData.getUser());
     }
 
-    //API not used by frontend
+    // API not used by frontend
     @Override
     @Transactional
     public List<CartItemResponseData> addCartItems(List<CartItemRequestData> requestDataList) {
@@ -84,9 +86,9 @@ public class CartItemServiceImpl implements CartItemService {
 
         if (existingItem.isPresent()) {
             CartItemEntity item = existingItem.get();
-            //User cart already have this item, check updated qty
-            //Assume inputs are evil & MAX_QUANTITY_PER_ITEM is not properly set in future
-            //Typecast long and block int overflow
+            // User cart already have this item, check updated qty
+            // Assume inputs are evil & MAX_QUANTITY_PER_ITEM is not properly set in future
+            // Typecast long and block int overflow
             long potentialQuantity = (long) item.getQuantity() + requestData.getQuantity();
 
             if (potentialQuantity > MAX_QUANTITY_PER_ITEM) {
@@ -99,7 +101,7 @@ public class CartItemServiceImpl implements CartItemService {
                         inventoryData.getSku(), inventoryData.getStock(), potentialQuantity);
                 throw new NotEnoughStockException("Not enough stock for total quantity");
             }
-            //Typecast back to int, update qty
+            // Typecast back to int, update qty
             item.setQuantity((int) potentialQuantity);
         } else {
             CartItemEntity newItem = cartItemEntityMapper.toEntity(requestData.getQuantity(), userRef,
@@ -124,7 +126,7 @@ public class CartItemServiceImpl implements CartItemService {
         // Use stream removes boilerplate code
         // Immutability
         List<CartItemResponseData> cartItems = entities.stream()
-                .map(cartItemEntityMapper::toResponseData)
+                .map(cartItemDataMapper::toResponseData)
                 .toList();
 
         // Enrich with promotional pricing
@@ -194,7 +196,7 @@ public class CartItemServiceImpl implements CartItemService {
             Integer quantity,
             UserData user) {
 
-        if (quantity <= 0) {
+        if (quantity == null || quantity <= 0) {
             logger.warn("Validation Failed: Quantity must be > 0. User={}, Sku={}", user.getUid(), inventory.getSku());
             throw new InvalidQuantityException("Quantity must be greater than 0");
         }

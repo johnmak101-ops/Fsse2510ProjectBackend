@@ -1,4 +1,6 @@
-package com.fsse2510.fsse2510_project_backend.data.showcase.domainObject;
+package com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response;
+
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import lombok.Builder;
 import lombok.Data;
@@ -12,6 +14,7 @@ import java.io.Serializable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public class ShowcaseCollectionData implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

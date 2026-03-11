@@ -19,4 +19,6 @@ public interface ProductAdminService {
     ProductResponseData updateProductMetadata(Integer pid, ProductDetails details);
 
     void deductStock(String sku, Integer quantity);
+
+    void deductStock(java.util.Map<String, Integer> skuQuantityMap);
 }

@@ -18,6 +18,7 @@ public interface CouponRepository extends JpaRepository<CouponEntity, String> {
     List<CouponEntity> findAllByValidUntilAfter(LocalDate date);
 
     @Modifying
-    @Query("UPDATE CouponEntity c SET c.usageCount = c.usageCount + 1 WHERE c.code = :code")
-    void incrementUsageCount(@Param("code") String code);
+    @Query("UPDATE CouponEntity c SET c.usageCount = c.usageCount + 1 " +
+            "WHERE c.code = :code AND (c.usageLimit IS NULL OR c.usageCount < c.usageLimit)")
+    int incrementUsageCount(@Param("code") String code);
 }

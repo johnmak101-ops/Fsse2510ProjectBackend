@@ -4,6 +4,8 @@ import com.fsse2510.fsse2510_project_backend.data.payment.domainObject.response.
 import com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.request.CreateTransactionRequestData;
 import com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.response.TransactionResponseData;
 import com.fsse2510.fsse2510_project_backend.data.user.domainObject.request.FirebaseUserData;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -34,7 +36,9 @@ public interface TransactionService {
 
         void abortTransactionFromStripeWebhook(String firebaseUid, Integer tid);
 
-        List<TransactionResponseData> getAllTransactions();
+        Page<TransactionResponseData> getAllTransactions(Pageable pageable);
 
         TransactionResponseData getAdminTransactionById(Integer tid);
+
+        TransactionResponseData adminUpdateTransactionStatus(Integer tid, String status);
 }

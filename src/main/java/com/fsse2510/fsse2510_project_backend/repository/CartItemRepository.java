@@ -18,6 +18,9 @@ public interface CartItemRepository extends JpaRepository<CartItemEntity, Intege
         @Query("SELECT c FROM CartItemEntity c " +
                         "JOIN FETCH c.productInventory pi " +
                         "JOIN FETCH pi.product p " +
+                        "LEFT JOIN FETCH p.category " +
+                        "LEFT JOIN FETCH p.collection " +
+                        "LEFT JOIN FETCH p.promotion " +
                         "WHERE c.user = :user")
         List<CartItemEntity> findAllByUserWithProduct(
                         @Param("user") UserEntity user);

@@ -6,9 +6,9 @@ import com.fsse2510.fsse2510_project_backend.data.transaction.dto.request.Create
 import com.fsse2510.fsse2510_project_backend.data.transaction.dto.response.TransactionResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.user.domainObject.request.FirebaseUserData;
 import com.fsse2510.fsse2510_project_backend.mapper.payment.PaymentDtoMapper;
+import com.fsse2510.fsse2510_project_backend.mapper.transaction.TransactionDataMapper;
 import com.fsse2510.fsse2510_project_backend.mapper.transaction.TransactionDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.TransactionService;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
@@ -37,6 +37,7 @@ import java.util.List;
 @Validated
 public class TransactionController {
     private final TransactionService transactionService;
+    private final TransactionDataMapper transactionDataMapper;
     private final TransactionDtoMapper transactionDtoMapper;
     private final PaymentDtoMapper paymentDtoMapper;
 
@@ -74,7 +75,7 @@ public class TransactionController {
     @PostMapping
     public TransactionResponseDto createTransaction(JwtAuthenticationToken token,
             @Valid @RequestBody(required = false) CreateTransactionRequestDto requestDto) {
-        var requestData = transactionDtoMapper.toRequestData(
+        var requestData = transactionDataMapper.toRequestData(
                 requestDto != null ? requestDto : new CreateTransactionRequestDto(), getFirebaseUser(token));
         return transactionDtoMapper.toDto(transactionService.createTransaction(requestData));
     }

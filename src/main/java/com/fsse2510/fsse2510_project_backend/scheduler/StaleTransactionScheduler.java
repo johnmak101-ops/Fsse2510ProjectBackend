@@ -51,6 +51,33 @@ public class StaleTransactionScheduler {
         }
     }
 
+    /**
+     * Scans for PENDING transactions older than 30 minutes and marks them ABORTED.
+     * This releases "virtual stock" back to the system.
+     */
+    @Scheduled(fixedRate = 15 * 60 * 1000) // Run every 15 minutes
+    public void cleanupStalePendingTransactions() {
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(30);
+        List<TransactionEntity> stalePending = transactionRepository
+                .findAllByStatusAndDatetimeBefore(PaymentStatus.PENDING, cutoff);
+
+        if (stalePending.isEmpty()) {
+            return;
+        }
+
+        logger.info("[StalePending] Found {} stale PENDING transactions. Marking ABORTED.", stalePending.size());
+
+        for (TransactionEntity tx : stalePending) {
+            try {
+                tx.setStatus(PaymentStatus.ABORTED);
+                transactionRepository.save(tx);
+                logger.info("[StalePending] TID={} aborted due to inactivity", tx.getTid());
+            } catch (Exception e) {
+                logger.error("[StalePending] Failed to abort TID={}: {}", tx.getTid(), e.getMessage());
+            }
+        }
+    }
+
     private void reconcile(TransactionEntity tx) {
         Integer tid = tx.getTid();
         String intentId = tx.getStripePaymentIntentId();

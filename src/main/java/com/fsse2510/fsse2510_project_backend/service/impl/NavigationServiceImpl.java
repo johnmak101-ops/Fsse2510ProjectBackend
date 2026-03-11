@@ -7,6 +7,7 @@ import com.fsse2510.fsse2510_project_backend.data.navigation.domainObject.respon
 import com.fsse2510.fsse2510_project_backend.data.navigation.entity.NavigationItemEntity;
 import com.fsse2510.fsse2510_project_backend.data.config.entity.SystemConfigEntity;
 import com.fsse2510.fsse2510_project_backend.mapper.navigation.NavigationItemEntityMapper;
+import com.fsse2510.fsse2510_project_backend.mapper.navigation.NavigationItemDataMapper;
 import com.fsse2510.fsse2510_project_backend.repository.CategoryRepository;
 import com.fsse2510.fsse2510_project_backend.repository.CollectionRepository;
 import com.fsse2510.fsse2510_project_backend.repository.NavigationItemRepository;
@@ -21,6 +22,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CollectionEntity;
@@ -36,8 +38,9 @@ public class NavigationServiceImpl implements NavigationService {
     private final CollectionRepository collectionRepository;
     private final SystemConfigRepository systemConfigRepository;
     private final NavigationItemEntityMapper navigationItemEntityMapper;
+    private final NavigationItemDataMapper navigationItemDataMapper;
 
-    private static final String CACHE_NAVIGATION = "navigation_v3";
+    private static final String CACHE_NAVIGATION = "navigation_v5";
 
     @Override
     @Transactional
@@ -45,8 +48,8 @@ public class NavigationServiceImpl implements NavigationService {
     public List<NavigationItemData> getPublicNavigation() {
         List<NavigationItemEntity> roots = navigationItemRepository.findPublicNavigationRoots();
         return roots.stream()
-                .map(navigationItemEntityMapper::toData)
-                .toList();
+                .map(navigationItemDataMapper::toData)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -64,7 +67,7 @@ public class NavigationServiceImpl implements NavigationService {
         }
 
         NavigationItemEntity saved = navigationItemRepository.save(entity);
-        return navigationItemEntityMapper.toData(saved);
+        return navigationItemDataMapper.toData(saved);
     }
 
     @Override
@@ -99,7 +102,7 @@ public class NavigationServiceImpl implements NavigationService {
         }
 
         NavigationItemEntity saved = navigationItemRepository.save(entity);
-        return navigationItemEntityMapper.toData(saved);
+        return navigationItemDataMapper.toData(saved);
     }
 
     @Override
@@ -118,10 +121,10 @@ public class NavigationServiceImpl implements NavigationService {
         return NavigationOptionsData.builder()
                 .collections(collectionRepository.findAll().stream()
                         .map(CollectionEntity::getName)
-                        .toList())
+                        .collect(Collectors.toList()))
                 .categories(categoryRepository.findAll().stream()
                         .map(CategoryEntity::getName)
-                        .toList())
+                        .collect(Collectors.toList()))
                 .tags(productRepository.findAllDistinctTags())
                 .productTypes(productRepository.findAllDistinctProductTypes())
                 .build();

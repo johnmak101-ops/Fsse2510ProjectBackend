@@ -11,8 +11,8 @@ import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductIm
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductInventoryResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductSummaryResponseDto;
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionData;
-import com.fsse2510.fsse2510_project_backend.data.showcase.dto.ShowcaseCollectionResponseDto;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.dto.response.ShowcaseCollectionResponseDto;
 import com.fsse2510.fsse2510_project_backend.mapper.promotion.PromotionDtoMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

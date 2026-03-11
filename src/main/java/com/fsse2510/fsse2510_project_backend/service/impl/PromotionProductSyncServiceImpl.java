@@ -206,13 +206,13 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
     }
 
     private boolean isBetterDiscount(PromotionEntity existing, PromotionEntity newPromo, BigDecimal originalPrice) {
-        BigDecimal existingDiscount = promotionCalculator.calculateDiscountAmount(existing, originalPrice);
-        BigDecimal newDiscount = promotionCalculator.calculateDiscountAmount(newPromo, originalPrice);
+        BigDecimal existingDiscount = promotionCalculator.calculateDiscountAmount(existing, originalPrice, null);
+        BigDecimal newDiscount = promotionCalculator.calculateDiscountAmount(newPromo, originalPrice, null);
         return existingDiscount.compareTo(newDiscount) > 0;
     }
 
-    @CacheEvict(value = { "product_v6", "product_recommendations_v6",
-            "product_attributes_v6", "product_showcase_v3" }, allEntries = true)
+    @CacheEvict(value = { "product_v8", "product_recommendations_v8",
+            "product_attributes_v8", "product_showcase_v5" }, allEntries = true)
     public void clearProductCache() {
         logger.debug("Cleared product cache");
     }

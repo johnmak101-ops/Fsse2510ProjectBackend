@@ -143,7 +143,7 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
             return false;
         }
 
-        boolean qualified = userLevel.ordinal() >= targetLevel.ordinal();
+        boolean qualified = userLevel.getRank() >= targetLevel.getRank();
         logger.debug("Level check: user={}, target={}, result={}",
                 userLevel, targetLevel, qualified);
         return qualified;

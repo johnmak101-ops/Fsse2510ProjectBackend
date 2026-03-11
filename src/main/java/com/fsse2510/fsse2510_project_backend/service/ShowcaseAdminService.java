@@ -1,6 +1,6 @@
 package com.fsse2510.fsse2510_project_backend.service;
 
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionAdminData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionAdminData;
 
 import java.util.List;
 

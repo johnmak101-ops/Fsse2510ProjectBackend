@@ -75,6 +75,24 @@ public class TransactionFinalizationService {
         return response;
     }
 
+    @Transactional
+    public TransactionResponseData adminFinalizeSuccess(Integer tid) {
+        TransactionEntity transaction = transactionRepository.findById(tid)
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found: " + tid));
+
+        if (transaction.getStatus() == PaymentStatus.SUCCESS) {
+            return transactionDataMapper.toData(transaction);
+        }
+
+        deductStock(transaction);
+        finalizeUserPointsAndMembership(transaction);
+
+        transaction.setStatus(PaymentStatus.SUCCESS);
+        TransactionEntity savedTx = transactionRepository.save(transaction);
+
+        return transactionDataMapper.toData(savedTx);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handleFailureWithRecovery(FirebaseUserData firebaseUser, Integer tid,
             PaymentIntent intent, Exception e) {
@@ -105,24 +123,29 @@ public class TransactionFinalizationService {
     }
 
     private void deductStock(TransactionEntity transaction) {
+        java.util.Map<String, Integer> skuQuantityMap = new java.util.HashMap<>();
         for (TransactionProductEntity item : transaction.getItems()) {
-            productAdminService.deductStock(item.getSku(), item.getQuantity());
+            skuQuantityMap.put(item.getSku(), skuQuantityMap.getOrDefault(item.getSku(), 0) + item.getQuantity());
         }
+        productAdminService.deductStock(skuQuantityMap);
     }
 
     private void finalizeUserPointsAndMembership(TransactionEntity transaction) {
         UserEntity user = userService.findEntityByIdWithLock(transaction.getUser().getUid());
 
-        BigDecimal earned = membershipService.calculateEarnedPoints(user, transaction.getTotal());
-        transaction.setEarnedPoints(earned);
-        user.setPoints(user.getPoints().add(earned));
-
+        // 1. Deduct used points first (if any)
         if (transaction.getUsedPoints() > 0) {
             user.setPoints(user.getPoints().subtract(BigDecimal.valueOf(transaction.getUsedPoints())));
         }
 
+        // 2. Perform membership renewal/upgrade check (might reset points balance)
         membershipService.checkStatusAndAutoUpdate(user);
         membershipService.accumulateAndCheckUpgrade(user, transaction.getTotal());
+
+        // 3. Add earnings from this transaction AFTER any potential renewal reset
+        BigDecimal earned = membershipService.calculateEarnedPoints(user, transaction.getTotal());
+        transaction.setEarnedPoints(earned);
+        user.setPoints(user.getPoints().add(earned));
 
         if (transaction.getCouponCode() != null) {
             couponService.incrementUsage(transaction.getCouponCode());
@@ -136,9 +159,12 @@ public class TransactionFinalizationService {
 
         if (intent != null && PAYMENT_READY_SUCCESS.equals(intent.getStatus())) {
             // Payment already captured — money is taken. Keep PROCESSING so Stripe
-            // webhook retry can re-attempt finalization. Do NOT mark FAILED or recover cart.
-            logger.warn("TID {} failed but payment already CAPTURED. Leaving in PROCESSING for webhook retry.",
-                    transaction.getTid());
+            // webhook retry can re-attempt finalization. Do NOT mark FAILED or recover
+            // cart.
+            logger.error("FATAL INTEGRITY ALERT: TID {} failed finalization BUT PAYMENT IS ALREADY CAPTURED. " +
+                    "This indicates a potential overselling scenario in the 30-min window. " +
+                    "Action Required: Manual stock adjustment or refund. Error: {}",
+                    transaction.getTid(), e.getMessage());
             return;
         }
 

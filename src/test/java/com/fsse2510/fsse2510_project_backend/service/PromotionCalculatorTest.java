@@ -28,11 +28,11 @@ class PromotionCalculatorTest {
                 promo.setDiscountValue(new BigDecimal("20.00")); // 20% off
 
                 BigDecimal originalPrice = new BigDecimal("100.00");
-                BigDecimal discount = calculator.calculateDiscountAmount(promo, originalPrice);
+                BigDecimal discount = calculator.calculateDiscountAmount(promo, originalPrice, 1);
 
                 // 20% of 100 = 20
-                // Use compareTo to ignore scale differences (e.g. 20.0000 vs 20.000000)
-                assertEquals(0, new BigDecimal("20.0000").compareTo(discount));
+                // Use compareTo to ignore scale differences
+                assertEquals(0, new BigDecimal("20.00").compareTo(discount));
         }
 
         @Test
@@ -42,7 +42,7 @@ class PromotionCalculatorTest {
                 promo.setDiscountValue(new BigDecimal("15.00")); // $15 off
 
                 BigDecimal originalPrice = new BigDecimal("100.00");
-                BigDecimal discount = calculator.calculateDiscountAmount(promo, originalPrice);
+                BigDecimal discount = calculator.calculateDiscountAmount(promo, originalPrice, 1);
 
                 assertEquals(new BigDecimal("15.00"), discount);
         }
@@ -54,7 +54,7 @@ class PromotionCalculatorTest {
                 promo.setDiscountValue(new BigDecimal("25.00")); // 25% off
 
                 BigDecimal originalPrice = new BigDecimal("200.00");
-                BigDecimal price = calculator.calculatePromotionalPrice(originalPrice, promo);
+                BigDecimal price = calculator.calculatePromotionalPrice(originalPrice, promo, 1);
 
                 // 200 * (1 - 0.25) = 150
                 assertEquals(new BigDecimal("150.00"), price);
@@ -67,7 +67,7 @@ class PromotionCalculatorTest {
                 promo.setDiscountValue(new BigDecimal("50.00")); // $50 off
 
                 BigDecimal originalPrice = new BigDecimal("200.00");
-                BigDecimal price = calculator.calculatePromotionalPrice(originalPrice, promo);
+                BigDecimal price = calculator.calculatePromotionalPrice(originalPrice, promo, 1);
 
                 assertEquals(new BigDecimal("150.00"), price);
         }
@@ -79,10 +79,29 @@ class PromotionCalculatorTest {
                 promo.setDiscountValue(new BigDecimal("300.00")); // $300 off
 
                 BigDecimal originalPrice = new BigDecimal("200.00");
-                BigDecimal price = calculator.calculatePromotionalPrice(originalPrice, promo);
+                BigDecimal price = calculator.calculatePromotionalPrice(originalPrice, promo, 1);
 
                 // Should be 0, not negative
                 assertEquals(0, BigDecimal.ZERO.setScale(2, RoundingMode.HALF_UP).compareTo(price));
+        }
+
+        @Test
+        void testCalculateDiscountAmount_BuyXGetYFree() {
+                PromotionEntity promo = new PromotionEntity();
+                promo.setType(PromotionType.BUY_X_GET_Y_FREE);
+                promo.setBuyX(2);
+                promo.setGetY(1);
+
+                BigDecimal originalPrice = new BigDecimal("100.00");
+
+                // Case 1: 3 units (1 cycle) -> 1 free unit -> 100/3 ~ 33.3333333333 discount
+                // per unit
+                BigDecimal discount3 = calculator.calculateDiscountAmount(promo, originalPrice, 3);
+                assertEquals(0, new BigDecimal("33.3333333333").compareTo(discount3));
+
+                // Case 2: 2 units (0 cycle) -> 0 free unit -> 0 discount
+                BigDecimal discount2 = calculator.calculateDiscountAmount(promo, originalPrice, 2);
+                assertEquals(0, BigDecimal.ZERO.compareTo(discount2));
         }
 
         @Test

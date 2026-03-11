@@ -41,7 +41,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -148,6 +149,11 @@ public class TransactionServiceImpl implements TransactionService {
             return transactionDataMapper.toData(transaction);
         }
 
+        if (transaction.getStatus() == PaymentStatus.ABORTED) {
+            logger.error("Security Alert: Attempted to finalize an ABORTED transaction! TID={}", tid);
+            throw new PaymentVerificationException("Transaction has been aborted due to timeout");
+        }
+
         if (transaction.getStatus() == PaymentStatus.PENDING) {
             transaction.setStatus(PaymentStatus.PROCESSING);
             transaction = transactionRepository.save(transaction);
@@ -159,8 +165,21 @@ public class TransactionServiceImpl implements TransactionService {
         }
 
         try {
-            if (intent != null && PAYMENT_READY_CAPTURE.equals(intent.getStatus())) {
-                stripeService.capturePayment(intent, transaction.getTid());
+            if (intent != null) {
+                // Defense-in-depth: Verify Captured Amount (Stripe uses cents)
+                BigDecimal stripeAmount = BigDecimal.valueOf(intent.getAmount())
+                        .divide(BigDecimal.valueOf(100), MONEY_SCALE, MONEY_ROUNDING);
+                if (stripeAmount.compareTo(transaction.getTotal()) != 0) {
+                    logger.error("Security Alert: Amount mismatch detected! Transaction TID={}, Total={}, Stripe={}",
+                            transaction.getTid(), transaction.getTotal(), stripeAmount);
+                    throw new PaymentVerificationException("Payment amount mismatch with provider");
+                }
+
+                if (PAYMENT_READY_CAPTURE.equals(intent.getStatus())) {
+                    stripeService.capturePayment(intent, transaction.getTid());
+                }
+                logger.info("Transaction Verified: TID={}, Amount={}, Currency={}",
+                        transaction.getTid(), stripeAmount, intent.getCurrency());
             }
 
             MembershipLevel prefLevel = transaction.getUser().getLevel();
@@ -217,8 +236,11 @@ public class TransactionServiceImpl implements TransactionService {
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
             return;
         }
-        if (transaction.getStripePaymentIntentId() == null
-                || !transaction.getStripePaymentIntentId().equals(intentId)) {
+        if (transaction.getStripePaymentIntentId() == null) {
+            logger.info("[Webhook] Auto-associating Intent ID {} for Transaction ID {}", intentId, tid);
+            transaction.setStripePaymentIntentId(intentId);
+            transactionRepository.save(transaction);
+        } else if (!transaction.getStripePaymentIntentId().equals(intentId)) {
             throw new PaymentVerificationException("Payment Intent Mismatch");
         }
         finishTransaction(new FirebaseUserData(firebaseUid, null), tid, null);
@@ -244,8 +266,11 @@ public class TransactionServiceImpl implements TransactionService {
         if (transaction.getStatus() == PaymentStatus.SUCCESS) {
             return;
         }
-        if (transaction.getStripePaymentIntentId() == null
-                || !transaction.getStripePaymentIntentId().equals(intentId)) {
+        if (transaction.getStripePaymentIntentId() == null) {
+            logger.info("[Webhook] Auto-associating Intent ID {} for Failed Transaction ID {}", intentId, tid);
+            transaction.setStripePaymentIntentId(intentId);
+            transactionRepository.save(transaction);
+        } else if (!transaction.getStripePaymentIntentId().equals(intentId)) {
             throw new PaymentVerificationException("Payment Intent Mismatch");
         }
         transaction.setStatus(PaymentStatus.FAILED);
@@ -270,15 +295,42 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public List<TransactionResponseData> getAllTransactions() {
-        return transactionRepository.findAll(Sort.by(Sort.Direction.DESC, "datetime"))
-                .stream().map(transactionDataMapper::toData).toList();
+    public Page<TransactionResponseData> getAllTransactions(Pageable pageable) {
+        return transactionRepository.findAllWithItems(pageable)
+                .map(transactionDataMapper::toData);
     }
 
     @Override
     public TransactionResponseData getAdminTransactionById(Integer tid) {
         return transactionDataMapper.toData(transactionRepository.findById(tid)
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found: " + tid)));
+    }
+
+    @Override
+    @Transactional
+    public TransactionResponseData adminUpdateTransactionStatus(Integer tid, String status) {
+        PaymentStatus newStatus = PaymentStatus.valueOf(status.toUpperCase());
+
+        if (newStatus == PaymentStatus.SUCCESS) {
+            return finalizationService.adminFinalizeSuccess(tid);
+        }
+
+        TransactionEntity transaction = transactionRepository.findById(tid)
+                .orElseThrow(() -> new TransactionNotFoundException("Transaction not found: " + tid));
+
+        if (transaction.getStatus() == PaymentStatus.SUCCESS && newStatus != PaymentStatus.SUCCESS) {
+            throw new TransactionIllegalStateException(
+                    "Cannot change status from SUCCESS to other states via admin manual update to avoid stock/points logical issues.");
+        }
+
+        transaction.setStatus(newStatus);
+        TransactionEntity saved = transactionRepository.save(transaction);
+
+        if (newStatus == PaymentStatus.FAILED || newStatus == PaymentStatus.ABORTED) {
+            finalizationService.recoverCartItems(saved);
+        }
+
+        return transactionDataMapper.toData(saved);
     }
 
     private TransactionEntity getOwnedTransaction(FirebaseUserData firebaseUser, Integer tid) {
@@ -426,7 +478,7 @@ public class TransactionServiceImpl implements TransactionService {
         BigDecimal discount;
         if (coupon.getDiscountType() == DiscountType.PERCENTAGE) {
             discount = scaleAmount(currentTotal.multiply(
-                    coupon.getDiscountValue().divide(BigDecimal.valueOf(100), MONEY_SCALE, MONEY_ROUNDING)));
+                    coupon.getDiscountValue().divide(BigDecimal.valueOf(100), 10, MONEY_ROUNDING)));
         } else {
             discount = scaleAmount(coupon.getDiscountValue());
         }

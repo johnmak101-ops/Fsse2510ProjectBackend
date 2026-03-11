@@ -44,6 +44,9 @@ dependencies {
     implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-csv'
     implementation 'com.stripe:stripe-java:24.1.0'
     implementation 'org.hashids:hashids:1.0.3'
+
+    // Firebase Admin SDK
+    implementation 'com.google.firebase:firebase-admin:9.3.0'
 }
 
 tasks.named('test') {

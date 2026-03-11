@@ -91,7 +91,7 @@ public class UserServiceImpl implements UserService {
         UserEntity user = userRepository.findByFirebaseUid(firebaseUserData.getFirebaseUid())
                 .orElseThrow(() -> new UserNotFoundException("User not found: " + firebaseUserData.getFirebaseUid()));
 
-        userDataMapper.updateEntity(requestData, user);
+        userEntityMapper.updateEntity(requestData, user);
 
         membershipService.accumulateAndCheckUpgrade(user, BigDecimal.ZERO);
 

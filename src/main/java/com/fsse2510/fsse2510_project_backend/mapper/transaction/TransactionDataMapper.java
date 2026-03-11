@@ -1,7 +1,10 @@
 package com.fsse2510.fsse2510_project_backend.mapper.transaction;
 
+import com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.request.CreateTransactionRequestData;
 import com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.response.TransactionResponseData;
+import com.fsse2510.fsse2510_project_backend.data.transaction.dto.request.CreateTransactionRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.transaction.entity.TransactionEntity;
+import com.fsse2510.fsse2510_project_backend.data.user.domainObject.request.FirebaseUserData;
 import com.fsse2510.fsse2510_project_backend.mapper.transactionProduct.TransactionProductDataMapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,4 +19,10 @@ public interface TransactionDataMapper {
     @Mapping(target = "previousLevel", ignore = true)
     @Mapping(target = "newLevel", ignore = true)
     TransactionResponseData toData(TransactionEntity entity);
+
+    @Mapping(target = "user", source = "user")
+    @Mapping(target = "couponCode", source = "dto.couponCode")
+    @Mapping(target = "usePoints", source = "dto.usePoints")
+    @Mapping(target = "addressId", source = "dto.addressId")
+    CreateTransactionRequestData toRequestData(CreateTransactionRequestDto dto, FirebaseUserData user);
 }

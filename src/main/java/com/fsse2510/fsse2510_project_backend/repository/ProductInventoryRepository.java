@@ -13,6 +13,9 @@ import java.util.Optional;
 public interface ProductInventoryRepository extends JpaRepository<ProductInventoryEntity, Integer> {
     Optional<ProductInventoryEntity> findBySku(String sku);
 
+    @Query("SELECT pi FROM ProductInventoryEntity pi JOIN FETCH pi.product WHERE pi.sku IN :skus")
+    java.util.List<ProductInventoryEntity> findBySkuInWithProduct(@Param("skus") java.util.List<String> skus);
+
     @Modifying
     @Query(value = "UPDATE product_inventory SET stock = stock - :quantity WHERE sku = :sku AND stock >= :quantity", nativeQuery = true)
     int deductStock(@Param("sku") String sku,

@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  backend:
+    image: docker.io/johnmak101/project-backend:latest
+    container_name: fsse-backend
+    ports:
+      - "8080:8080"
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - JAVA_TOOL_OPTIONS=-Xms512m -Xmx1g -XX:MaxMetaspaceSize=160m -Xss512k -XX:+UseG1GC
+      # Spring Boot 用 FIREBASE_CREDENTIALS_PATH 讀取憑證（見 application.properties）
+      - FIREBASE_CREDENTIALS_PATH=/app/config/firebase-key.json
+    volumes:
+      # 左邊：主機檔案（可為 firebase-admin.json 或 firebase-adminsdk-xxx.json）
+      # 右邊：Container 內路徑，需與 FIREBASE_CREDENTIALS_PATH 一致
+      - ./firebase-admin.json:/app/config/firebase-key.json:ro
+    deploy:
+      resources:
+        limits:
+          memory: 1.5G

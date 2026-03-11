@@ -7,6 +7,7 @@ import com.fsse2510.fsse2510_project_backend.data.user.entity.UserEntity;
 import com.fsse2510.fsse2510_project_backend.data.wishlist.domainObject.response.WishlistResponseData;
 import com.fsse2510.fsse2510_project_backend.data.wishlist.entity.WishlistEntity;
 import com.fsse2510.fsse2510_project_backend.exception.product.ProductNotFoundException;
+import com.fsse2510.fsse2510_project_backend.mapper.wishlist.WishlistDataMapper;
 import com.fsse2510.fsse2510_project_backend.mapper.wishlist.WishlistEntityMapper;
 import com.fsse2510.fsse2510_project_backend.repository.ProductRepository;
 import com.fsse2510.fsse2510_project_backend.repository.UserRepository;
@@ -31,6 +32,7 @@ public class WishlistServiceImpl implements WishlistService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final WishlistEntityMapper wishlistEntityMapper;
+    private final WishlistDataMapper wishlistDataMapper;
 
     @Override
     @Transactional
@@ -52,7 +54,7 @@ public class WishlistServiceImpl implements WishlistService {
     public List<WishlistResponseData> getUserWishlist(FirebaseUserData firebaseUser) {
         UserEntity user = getUserEntity(firebaseUser);
         return wishlistRepository.findAllByUser(user).stream()
-                .map(wishlistEntityMapper::toResponseData)
+                .map(wishlistDataMapper::toResponseData)
                 .toList();
     }
 

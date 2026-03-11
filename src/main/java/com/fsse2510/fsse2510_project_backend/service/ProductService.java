@@ -5,7 +5,7 @@ import com.fsse2510.fsse2510_project_backend.data.product.domainObject.request.P
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductAttributesData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductResponseData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductSummaryData;
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionData;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;

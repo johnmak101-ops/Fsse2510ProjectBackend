@@ -1,6 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.data.product.domainObject.response;
 
 import com.fsse2510.fsse2510_project_backend.data.promotion.domainObject.response.PromotionResponseData;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -18,6 +19,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public class ProductResponseData implements Serializable, PromotionEnrichable {
     @Serial
     private static final long serialVersionUID = 1L;

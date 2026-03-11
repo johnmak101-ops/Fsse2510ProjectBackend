@@ -1,6 +1,6 @@
 package com.fsse2510.fsse2510_project_backend.mapper.showcase;
 
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionAdminData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionAdminData;
 import com.fsse2510.fsse2510_project_backend.data.showcase.dto.response.ShowcaseCollectionAdminResponseDto;
 import org.mapstruct.Mapper;
 

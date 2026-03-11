@@ -7,7 +7,7 @@ import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductSummaryData;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionData;
 import com.fsse2510.fsse2510_project_backend.exception.product.ProductNotFoundException;
 import com.fsse2510.fsse2510_project_backend.exception.product.ProductServiceException;
 import com.fsse2510.fsse2510_project_backend.mapper.product.ProductDataMapper;
@@ -30,6 +30,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,11 +44,11 @@ public class ProductServiceImpl implements ProductService {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductServiceImpl.class);
 
-    private static final String CACHE_PRODUCT = "product_v6";
-    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v6";
-    private static final String CACHE_ATTRIBUTES = "product_attributes_v6";
-    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v3";
-    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v3";
+    private static final String CACHE_PRODUCT = "product_v8";
+    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v8";
+    private static final String CACHE_ATTRIBUTES = "product_attributes_v8";
+    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v5";
+    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v5";
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -167,13 +169,13 @@ public class ProductServiceImpl implements ProductService {
     public ProductAttributesData getAttributes() {
         try {
             List<String> categories = categoryRepository.findAll().stream()
-                    .map(CategoryEntity::getName).toList();
-            List<String> sizes = productRepository.findAllDistinctSizes();
-            List<String> colors = productRepository.findAllDistinctColors();
-            List<String> types = productRepository.findAllDistinctProductTypes();
+                    .map(CategoryEntity::getName).collect(Collectors.toList());
+            List<String> sizes = new ArrayList<>(productRepository.findAllDistinctSizes());
+            List<String> colors = new ArrayList<>(productRepository.findAllDistinctColors());
+            List<String> types = new ArrayList<>(productRepository.findAllDistinctProductTypes());
 
             List<String> featuredCollections = systemConfigRepository.findByConfigKey("navbar_featured_collections")
-                    .map(config -> List.of(config.getConfigValue().split(",")))
+                    .map(config -> (List<String>) new ArrayList<>(Arrays.asList(config.getConfigValue().split(","))))
                     .orElseGet(this::getDefaultFeaturedCollections);
 
             return ProductAttributesData.builder()
@@ -194,7 +196,7 @@ public class ProductServiceImpl implements ProductService {
                         .id(e.getId()).title(e.getTitle()).imageUrl(e.getImageUrl())
                         .bannerUrl(e.getBannerUrl()).tag(e.getTag())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
     }
 
     // Helpers
@@ -213,7 +215,7 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private List<String> getDefaultFeaturedCollections() {
-        return List.of("HEART OF NORDIC", "HOLIDAY", "NEW ARRIVALS", "STEIFF",
-                "AIRY MOCO", "COZY DINER DREAM", "COZY BEAR", "SMOOTHIE", "HOTEL GETAWAY", "PLUSH");
+        return new ArrayList<>(Arrays.asList("HEART OF NORDIC", "HOLIDAY", "NEW ARRIVALS", "STEIFF",
+                "AIRY MOCO", "COZY DINER DREAM", "COZY BEAR", "SMOOTHIE", "HOTEL GETAWAY", "PLUSH"));
     }
 }

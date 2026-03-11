@@ -139,7 +139,14 @@ public class CouponServiceImpl implements CouponService {
             logger.warn("Increment Usage Failed: Coupon not found. Code={}", code);
             return;
         }
-        couponRepository.incrementUsageCount(code);
+
+        int updated = couponRepository.incrementUsageCount(code);
+        if (updated == 0) {
+            logger.error(
+                    "Coupon Limit Breach: Failed to increment usage for code {}. Limit may have been reached in a concurrent session.",
+                    code);
+            throw new CouponInvalidException("Coupon usage limit has been reached");
+        }
         logger.info("Coupon incremented usage atomically: {}", code);
     }
 }

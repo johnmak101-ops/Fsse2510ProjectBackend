@@ -8,7 +8,7 @@ import com.fsse2510.fsse2510_project_backend.data.promotion.entity.PromotionEnti
 import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.PromotionType;
 import com.fsse2510.fsse2510_project_backend.repository.ProductRepository;
 import com.fsse2510.fsse2510_project_backend.repository.PromotionRepository;
-import com.fsse2510.fsse2510_project_backend.service.PromotionApplicabilityService;
+import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.PromotionType;
 import com.fsse2510.fsse2510_project_backend.service.impl.ProductPromotionEnricherServiceImpl;
 import com.fsse2510.fsse2510_project_backend.service.impl.PromotionCalculator;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +29,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -118,10 +117,11 @@ class PromotionEdgeCaseTest {
         activePromo.setTargetCategories(Set.of("  ELECTRONICS  "));
 
         when(promotionRepository.findActivePromotionsWithTargets(any())).thenReturn(List.of(activePromo));
-        when(productRepository.findById(1)).thenReturn(Optional.of(product));
+        when(productRepository.findByPidWithAllDetails(1)).thenReturn(Optional.of(product));
         when(promotionApplicabilityService.isApplicable(any(), any(), any(Boolean.class))).thenReturn(true);
-        lenient().when(promotionCalculator.calculateDiscountAmount(any(), any())).thenReturn(new BigDecimal("10"));
-        when(promotionCalculator.calculatePromotionalPrice(any(), any())).thenReturn(new BigDecimal("90"));
+        lenient().when(promotionCalculator.calculateDiscountAmount(any(), any(), any()))
+                .thenReturn(new BigDecimal("10"));
+        when(promotionCalculator.calculatePromotionalPrice(any(), any(), any())).thenReturn(new BigDecimal("90"));
 
         ProductResponseData result = enricherService.enrichWithPromotions(productDto);
 
@@ -146,12 +146,13 @@ class PromotionEdgeCaseTest {
 
         when(promotionRepository.findActivePromotionsWithTargets(any()))
                 .thenReturn(List.of(standardPromo, membershipPromo));
-        when(productRepository.findById(1)).thenReturn(Optional.of(product));
+        when(productRepository.findByPidWithAllDetails(1)).thenReturn(Optional.of(product));
         when(promotionApplicabilityService.isApplicable(any(), any(), any(Boolean.class))).thenReturn(true);
+        when(promotionApplicabilityService.isProductEligibleForPromotion(any(), any())).thenReturn(true);
 
         // Both give $20 discount
-        when(promotionCalculator.calculateDiscountAmount(any(), any())).thenReturn(new BigDecimal("20"));
-        when(promotionCalculator.calculatePromotionalPrice(any(), any())).thenReturn(new BigDecimal("80"));
+        when(promotionCalculator.calculateDiscountAmount(any(), any(), any())).thenReturn(new BigDecimal("20"));
+        when(promotionCalculator.calculatePromotionalPrice(any(), any(), any())).thenReturn(new BigDecimal("80"));
 
         // Mock badge text for both
         lenient().when(promotionCalculator.generateBadgeText(standardPromo)).thenReturn("SALE");

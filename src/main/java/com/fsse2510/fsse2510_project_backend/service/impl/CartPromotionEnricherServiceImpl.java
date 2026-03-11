@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -166,7 +167,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
             BigDecimal newPrice, PromotionEntity promo) {
         BigDecimal discountAmount = originalPrice.subtract(newPrice);
         BigDecimal discountPct = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? discountAmount.divide(originalPrice, 4, MONEY_ROUNDING)
+                ? discountAmount.divide(originalPrice, 10, MONEY_ROUNDING)
                 : BigDecimal.ZERO;
 
         item.setPrice(newPrice);
@@ -197,7 +198,7 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
 
         // Recalculate percentage based on original price
         BigDecimal newDiscountPct = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? newDiscountAmount.divide(originalPrice, 4, MONEY_ROUNDING)
+                ? newDiscountAmount.divide(originalPrice, 10, MONEY_ROUNDING)
                 : BigDecimal.ZERO;
 
         item.setPrice(newNetPrice);
@@ -328,11 +329,13 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
         Optional<PromotionEntity> best = candidates.stream()
                 .filter(p -> promotionApplicabilityService.isApplicable(p, productEntity, user, true))
                 .max(Comparator
-                        .comparing((PromotionEntity p) -> promotionCalculator.calculateDiscountAmount(p, originalPrice))
+                        .comparing((PromotionEntity p) -> promotionCalculator.calculateDiscountAmount(p, originalPrice,
+                                item.getCartQuantity()))
                         .thenComparing(p -> p.getType() == PromotionType.MEMBERSHIP_DISCOUNT ? 1 : 0));
 
         if (best.isPresent()) {
-            BigDecimal promoPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, best.get());
+            BigDecimal promoPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, best.get(),
+                    item.getCartQuantity());
             applyPricing(item, originalPrice, promoPrice, best.get());
         } else {
             checkAndSetMembershipBadge(item, index.regularPromos, productEntity);
@@ -344,7 +347,6 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
             List<PromotionEntity> bundlePromos,
             Map<Integer, ProductEntity> entityMap, UserEntity user) {
         for (PromotionEntity promo : bundlePromos) {
-            int minQty = promo.getMinQuantity() != null ? promo.getMinQuantity() : 0;
 
             List<CartItemResponseData> qualifying = items.stream()
                     .filter(item -> {
@@ -356,40 +358,27 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
             if (qualifying.isEmpty())
                 continue;
 
-            int totalQty = qualifying.stream().mapToInt(CartItemResponseData::getCartQuantity).sum();
-            if (totalQty < minQty)
-                continue;
-
             if (promo.getDiscountType() == DiscountType.PERCENTAGE) {
-                // Apply if better than existing discount for each item
-                // NOTE: This does NOT support repeating bundles (Multipliers) out-of-the-box.
-                // e.g. "Buy 6 Get $60" when promo is "Buy 3 Get $30".
-                // To support circular/repeating bundles, an `isRepeating` boolean flag is
-                // needed on PromotionEntity.
                 for (CartItemResponseData item : qualifying) {
                     BigDecimal originalPrice = resolveOriginal(item);
-                    BigDecimal bundleDiscount = promotionCalculator.calculateDiscountAmount(promo, originalPrice);
+                    BigDecimal bundleDiscount = promotionCalculator.calculateDiscountAmount(promo, originalPrice,
+                            item.getCartQuantity());
                     BigDecimal currentDiscount = item.getDiscountAmount() != null ? item.getDiscountAmount()
                             : BigDecimal.ZERO;
 
                     if (bundleDiscount.compareTo(currentDiscount) > 0) {
-                        BigDecimal promoPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, promo);
+                        BigDecimal promoPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, promo,
+                                item.getCartQuantity());
                         applyPricing(item, originalPrice, promoPrice, promo);
                     }
                 }
             } else if (promo.getDiscountType() == DiscountType.FIXED) {
-                // Apply the fixed discount ONCE across the qualifying bundle items
-                // proportionally
-                // NOTE: This does NOT support repeating bundles (Multipliers) out-of-the-box.
-                // e.g. "Buy 6 Get $60" when promo is "Buy 3 Get $30".
-                // To support circular/repeating bundles, an `isRepeating` boolean flag is
-                // needed on PromotionEntity.
                 distributeFixedDiscount(qualifying, promo, false);
             }
         }
     }
 
-    // Order-Level Promos
+    // Pass 4: Order-Level Promos
     private void applyOrderLevelPromos(List<CartItemResponseData> items,
             List<PromotionEntity> orderLevelPromos,
             Map<Integer, ProductEntity> entityMap, UserEntity user) {
@@ -406,82 +395,48 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
 
             boolean conditionMet = false;
 
-            // Check Qty
             if (promo.getType() == PromotionType.MIN_QUANTITY_DISCOUNT) {
                 int minQty = promo.getMinQuantity() != null ? promo.getMinQuantity() : 0;
                 int totalQty = qualifying.stream().mapToInt(CartItemResponseData::getCartQuantity).sum();
                 conditionMet = totalQty >= minQty;
-                logger.debug("MIN_QTY promo {}: totalQty={}, minQty={}, met={}", promo.getId(), totalQty, minQty,
-                        conditionMet);
-
-                // Check total cart amount (using PHASE 1 NET PRICE for order-level stacking)
             } else if (promo.getType() == PromotionType.MIN_AMOUNT_DISCOUNT) {
                 BigDecimal minAmount = promo.getMinAmount() != null ? promo.getMinAmount() : BigDecimal.ZERO;
                 BigDecimal totalAmount = qualifying.stream()
                         .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getCartQuantity())))
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 conditionMet = totalAmount.compareTo(minAmount) >= 0;
-                logger.debug("MIN_AMOUNT promo {}: totalAmount={}, minAmount={}, met={}", promo.getId(), totalAmount,
-                        minAmount, conditionMet);
             }
 
-            if (!conditionMet) {
-                logger.info("Order-level promo {} condition NOT met", promo.getId());
+            if (!conditionMet)
                 continue;
-            }
-
-            logger.info("Order-level promo {} condition met. Qualifying items: {}", promo.getId(), qualifying.size());
 
             if (promo.getDiscountType() == DiscountType.PERCENTAGE) {
                 for (CartItemResponseData item : qualifying) {
-                    BigDecimal netPrice = item.getPrice(); // Stacked on Phase 1 net price
-
-                    // Additive calculating
-                    BigDecimal promoDiscount = promotionCalculator.calculateDiscountAmount(promo, netPrice);
+                    BigDecimal netPrice = item.getPrice();
+                    BigDecimal promoDiscount = promotionCalculator.calculateDiscountAmount(promo, netPrice,
+                            item.getCartQuantity());
 
                     if (promoDiscount.compareTo(BigDecimal.ZERO) > 0) {
-                        logger.info("Applying additive percentage promo {} to SKU {}", promo.getId(), item.getSku());
                         additiveApplyPricing(item, netPrice, promoDiscount, promo);
                     }
                 }
             } else if (promo.getDiscountType() == DiscountType.FIXED) {
-                distributeFixedDiscount(qualifying, promo, true); // true = use Net Price
+                distributeFixedDiscount(qualifying, promo, true);
             }
         }
     }
 
-    /*
-     * Proportional Allocation strategy for FIXED discounts.
-     * 
-     * WHY THIS IS NEEDED:
-     * If a promo is "Get $50 OFF the order" and a customer buys item A ($80) and
-     * item B ($20),
-     * we cannot just deduct the entire $50 from item A. If the customer refunds
-     * item A,
-     * they would be refunded $30, and keep item B ($20 value) having only paid $50
-     * total,
-     * effectively getting item B for free.
-     * Proportional allocation spreads the discount based on the item's weight in
-     * the cart subtotal.
-     * (Item A gets 80% of the $50 discount, Item B gets 20%).
-     * 
-     * PENNY PROBLEM SOLVER:
-     * When dividing fixed discounts across items (e.g., $10 off three $10 items),
-     * $10 / 3 = $3.33 discount per item.
-     * $3.33 + $3.33 + $3.33 = $9.99 total distributed discount.
-     * We lose $0.01 due to rounding (The Penny Problem).
-     * To solve this, we use the "Last Item Absorbs" pattern:
-     * The last item in the list ignores proportional math and just absorbs whatever
-     * discount is left.
-     */
     private void distributeFixedDiscount(List<CartItemResponseData> qualifying, PromotionEntity promo,
             boolean useNetPrice) {
         BigDecimal totalDiscount = promo.getDiscountValue();
         if (totalDiscount == null || totalDiscount.compareTo(BigDecimal.ZERO) <= 0)
             return;
 
-        // 1. Calculate overall total amount of qualifying items (using cart quantity)
-        // This is the denominator for our proportional weight calculations.
+        distributeFixedAmountToItems(qualifying, totalDiscount, promo, useNetPrice);
+    }
+
+    private void distributeFixedAmountToItems(List<CartItemResponseData> qualifying, BigDecimal totalDiscount,
+            PromotionEntity promo, boolean useNetPrice) {
         BigDecimal totalQualifyingAmount = qualifying.stream()
                 .map(item -> {
                     BigDecimal basePrice = useNetPrice ? item.getPrice() : resolveOriginal(item);
@@ -492,12 +447,8 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
         if (totalQualifyingAmount.compareTo(BigDecimal.ZERO) <= 0)
             return;
 
-        // 2. Prevent the company from paying the customer.
-        // If the cart is $30 and the coupon is $50, we can only deduct $30.
         BigDecimal actualDiscountToApply = totalDiscount.min(totalQualifyingAmount);
 
-        // Check if applying this fixed discount is actually better than their CURRENT
-        // overall discounts (ONLY for bundle promos, order-level stacks additively!).
         if (!useNetPrice) {
             BigDecimal currentTotalDiscount = qualifying.stream()
                     .map(item -> (item.getDiscountAmount() != null ? item.getDiscountAmount() : BigDecimal.ZERO)
@@ -521,102 +472,68 @@ public class CartPromotionEnricherServiceImpl implements CartPromotionEnricherSe
 
             BigDecimal itemDiscountTotal;
 
-            // 3. The Penny Problem Solver: Last item absorbs the remainder.
             if (i == qualifying.size() - 1) {
-                // Ignore proportionality, just dump whatever discount hasn't been used yet.
                 itemDiscountTotal = actualDiscountToApply.subtract(distributedDiscount);
             } else {
-                // 4. Proportional Allocation: (itemTotal / overallTotal) *
-                // actualDiscountToApply
-                // Multiply first, divide last — preserves precision.
                 itemDiscountTotal = itemTotalBase.multiply(actualDiscountToApply)
-                        .divide(totalQualifyingAmount, 2, MONEY_ROUNDING);
-
-                // Keep track of how much discount we've handed out so far
+                        .divide(totalQualifyingAmount, 10, MONEY_ROUNDING);
                 distributedDiscount = distributedDiscount.add(itemDiscountTotal);
             }
 
             if (useNetPrice) {
-                // Additive stack on top of net price
-                // itemDiscountTotal refers to the total amount to take off this cart item
-                // group.
-                // We divide it evenly amongst all qty in this line item.
                 BigDecimal singleUnitDiscount = itemDiscountTotal.divide(BigDecimal.valueOf(qty), 10,
                         MONEY_ROUNDING);
                 additiveApplyPricing(item, baseUnitPrice, singleUnitDiscount, promo);
             } else {
-                // 5. Calculate new unit price
-                // Ensure itemTotal doesn't drop below 0
                 BigDecimal newItemTotal = itemTotalBase.subtract(itemDiscountTotal).max(BigDecimal.ZERO);
-
-                // Divide the final discounted total by the quantity to get the discounted
-                // single unit price
                 BigDecimal newUnitPrice = newItemTotal.divide(BigDecimal.valueOf(qty), 10, MONEY_ROUNDING);
-
-                // Mutate the item state to reflect the promotion
-                applyPricing(item, baseUnitPrice, newUnitPrice, promo);
+                applyPricing(item, resolveOriginal(item), newUnitPrice, promo);
             }
-
-            logger.info("Proportionally distributed {} from fixed promo {} to SKU {}.",
-                    itemDiscountTotal, promo.getId(), item.getSku());
         }
     }
 
-    // Buy X Get Y
+    // Pass 3: Buy X Get Y
     private void applyBuyXGetYPromos(List<CartItemResponseData> items,
-            List<PromotionEntity> b2gyPromos,
+            List<PromotionEntity> bxgyPromos,
             Map<Integer, ProductEntity> entityMap, UserEntity user) {
-        Map<Integer, List<CartItemResponseData>> eligibleItemsMap = new HashMap<>();
+        for (PromotionEntity promo : bxgyPromos) {
+            int buyX = promo.getBuyX() != null ? promo.getBuyX() : 0;
+            int getY = promo.getGetY() != null ? promo.getGetY() : 0;
+            int bundleSize = buyX + getY;
 
-        for (CartItemResponseData item : items) {
-            ProductEntity pe = entityMap.get(item.getPid());
-            if (pe == null)
-                continue;
-            for (PromotionEntity promo : b2gyPromos) {
-                if (promotionApplicabilityService.isApplicable(promo, pe, user, true)) {
-                    eligibleItemsMap.computeIfAbsent(promo.getId(), k -> new ArrayList<>()).add(item);
-                }
-            }
-        }
-
-        for (Map.Entry<Integer, List<CartItemResponseData>> entry : eligibleItemsMap.entrySet()) {
-            PromotionEntity promo = b2gyPromos.stream()
-                    .filter(p -> p.getId().equals(entry.getKey())).findFirst().orElse(null);
-            if (promo == null)
+            if (bundleSize <= 0)
                 continue;
 
-            List<CartItemResponseData> eligible = entry.getValue();
-            int bundleSize = promo.getBuyX() + promo.getGetY();
-            int totalQty = eligible.stream().mapToInt(CartItemResponseData::getCartQuantity).sum();
+            List<CartItemResponseData> qualifying = items.stream()
+                    .filter(item -> {
+                        ProductEntity pe = entityMap.get(item.getPid());
+                        return pe != null && promotionApplicabilityService.isApplicable(promo, pe, user, true);
+                    })
+                    .toList();
+
+            if (qualifying.isEmpty())
+                continue;
+
+            int totalQty = qualifying.stream().mapToInt(CartItemResponseData::getCartQuantity).sum();
             if (totalQty < bundleSize)
                 continue;
 
-            int totalFreeItems = (totalQty / bundleSize) * promo.getGetY();
+            int freeUnitsCount = (totalQty / bundleSize) * getY;
+            if (freeUnitsCount <= 0)
+                continue;
 
-            // Sort by price ascending — discount cheapest items first
-            eligible.sort(Comparator.comparing(CartPromotionEnricherServiceImpl::resolveOriginal));
+            // Functional Style: Expand all unit prices, sort them, and sum the cheapest N
+            BigDecimal totalBundleDiscount = qualifying.stream()
+                    .flatMap(item -> Collections.nCopies(item.getCartQuantity(), resolveOriginal(item)).stream())
+                    .sorted()
+                    .limit(freeUnitsCount)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            int remainingFree = totalFreeItems;
-            for (CartItemResponseData item : eligible) {
-                if (remainingFree <= 0)
-                    break;
-
-                int qty = item.getCartQuantity();
-                BigDecimal unitPrice = resolveOriginal(item);
-                int reduceCount = Math.min(qty, remainingFree);
-
-                if (reduceCount > 0) {
-                    BigDecimal oldTotal = unitPrice.multiply(BigDecimal.valueOf(qty));
-                    BigDecimal freeAmount = unitPrice.multiply(BigDecimal.valueOf(reduceCount));
-                    BigDecimal newUnitPrice = oldTotal.subtract(freeAmount)
-                            .divide(BigDecimal.valueOf(qty), 10, MONEY_ROUNDING);
-
-                    // Only apply if better than current price
-                    if (newUnitPrice.compareTo(item.getPrice()) < 0) {
-                        applyPricing(item, unitPrice, newUnitPrice, promo);
-                    }
-                    remainingFree -= reduceCount;
-                }
+            if (totalBundleDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                logger.info("Applying BxGy promo {} total discount: {} across qualifying units", promo.getId(),
+                        totalBundleDiscount);
+                // Distribute this discount proportionally across items
+                distributeFixedAmountToItems(qualifying, totalBundleDiscount, promo, false);
             }
         }
     }

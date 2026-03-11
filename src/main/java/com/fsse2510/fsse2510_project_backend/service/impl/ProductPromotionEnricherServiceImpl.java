@@ -19,13 +19,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -196,7 +196,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
     public ProductResponseData enrichWithPromotions(ProductResponseData product) {
         if (product == null)
             return null;
-        ProductEntity entity = productRepository.findById(product.getPid()).orElse(null);
+        ProductEntity entity = productRepository.findByPidWithAllDetails(product.getPid()).orElse(null);
         return enrichWithPromotions(product, entity);
     }
 
@@ -271,24 +271,24 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         dto.setPromotionBadgeTexts(new ArrayList<>());
         dto.setIsSale(false);
 
-        PromotionEntity bestPromo = findBestPromotion(entity, index);
+        Optional<PromotionEntity> best = findBestPromotion(entity, index);
 
-        if (bestPromo == null) {
+        if (best.isEmpty()) {
             checkAndSetMembershipBadge(dto, index.allPromos, entity);
             return setNoDiscount(dto);
         }
 
         BigDecimal originalPrice = dto.getPrice();
-        BigDecimal promotionalPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, bestPromo);
-        BigDecimal discountAmount = originalPrice.subtract(promotionalPrice);
+        BigDecimal promoPrice = promotionCalculator.calculatePromotionalPrice(originalPrice, best.get(), null);
+        BigDecimal discountAmount = originalPrice.subtract(promoPrice);
         BigDecimal discountPercentage = originalPrice.compareTo(BigDecimal.ZERO) > 0
-                ? discountAmount.divide(originalPrice, 4, MONEY_ROUNDING)
+                ? discountAmount.divide(originalPrice, 10, MONEY_ROUNDING)
                 : BigDecimal.ZERO;
 
         dto.setOriginalPrice(originalPrice);
 
-        if (PRICE_REDUCING_TYPES.contains(bestPromo.getType())) {
-            dto.setPrice(promotionalPrice);
+        if (PRICE_REDUCING_TYPES.contains(best.get().getType())) {
+            dto.setPrice(promoPrice);
             dto.setDiscountAmount(discountAmount);
             dto.setDiscountPercentage(discountPercentage);
         } else {
@@ -297,7 +297,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
             dto.setDiscountPercentage(BigDecimal.ZERO);
         }
 
-        String badge = promotionCalculator.generateBadgeText(bestPromo);
+        String badge = promotionCalculator.generateBadgeText(best.get());
         if (badge != null) {
             dto.getPromotionBadgeTexts().add(badge);
         }
@@ -309,7 +309,8 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
     }
 
     /*
-     * Append membership teaser badge if applicable (does not overwrite existing badges).
+     * Append membership teaser badge if applicable (does not overwrite existing
+     * badges).
      */
     private <T extends PromotionEnrichable> void checkAndSetMembershipBadge(T dto,
             List<PromotionEntity> activePromos,
@@ -334,8 +335,9 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         dto.setOriginalPrice(dto.getPrice());
         dto.setDiscountAmount(BigDecimal.ZERO);
         dto.setDiscountPercentage(BigDecimal.ZERO);
-        if (Boolean.FALSE.equals(dto.getIsSale())) {
-            dto.setPromotionBadgeTexts(Collections.emptyList());
+        if (dto.getIsSale() == null || !dto.getIsSale()) {
+            dto.setIsSale(false);
+            dto.setPromotionBadgeTexts(new ArrayList<>());
         }
         return dto;
     }
@@ -380,10 +382,11 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
      * We grab only the promotions from the 'bins' (HashMaps) that directly match
      * this product's
      * attributes. Then we calculate the actual $ discount amount for each
-     * candidate, and finally pick the MAX discount. This guarantees the customer always gets the cheapest
+     * candidate, and finally pick the MAX discount. This guarantees the customer
+     * always gets the cheapest
      * possible price.
      */
-    private PromotionEntity findBestPromotion(ProductEntity product, PromotionIndex index) {
+    private Optional<PromotionEntity> findBestPromotion(ProductEntity product, PromotionIndex index) {
         Set<PromotionEntity> candidates = new HashSet<>(index.storewidePromos);
 
         candidates.addAll(index.pidToPromos.getOrDefault(product.getPid(), List.of()));
@@ -409,12 +412,12 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                     tag -> candidates.addAll(index.tagToPromos.getOrDefault(tag.trim().toLowerCase(), List.of())));
         }
 
+        BigDecimal originalPrice = product.getPrice(); // Define originalPrice here for use in comparator
         return candidates.stream()
                 .filter(p -> promotionApplicabilityService.isApplicable(p, product, false))
                 .max(Comparator
                         .comparing((PromotionEntity p) -> promotionCalculator.calculateDiscountAmount(p,
-                                product.getPrice()))
-                        .thenComparing(p -> p.getType() == PromotionType.MEMBERSHIP_DISCOUNT ? 1 : 0))
-                .orElse(null);
+                                originalPrice, null))
+                        .thenComparing(p -> p.getType() == PromotionType.MEMBERSHIP_DISCOUNT ? 1 : 0));
     }
 }

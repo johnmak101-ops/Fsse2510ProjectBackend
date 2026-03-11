@@ -1,4 +1,4 @@
-package com.fsse2510.fsse2510_project_backend.data.showcase.dto;
+package com.fsse2510.fsse2510_project_backend.data.showcase.dto.response;
 
 import lombok.Builder;
 import lombok.Data;

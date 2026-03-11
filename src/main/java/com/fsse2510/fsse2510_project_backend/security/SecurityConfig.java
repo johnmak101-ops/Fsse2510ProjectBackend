@@ -60,15 +60,26 @@ public class SecurityConfig {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
 
-            // 1. Get "email" claim from JWT Token
-            String email = (String) jwt.getClaims().get("email");
+            System.out.println("--- JWT Auth Checking ---");
+            
+            // Check for the custom claim "admin"
+            Boolean isAdmin = (Boolean) jwt.getClaims().get("admin");
+            System.out.println("Is Admin Claim present & true? " + isAdmin);
 
-            // 2. Check if in Admin List
-            List<String> adminList = Arrays.asList(adminEmails.split(","));
-
-            // 3. If Email matches, grant "ROLE_ADMIN" authority
-            if (email != null && adminList.contains(email)) {
+            if (Boolean.TRUE.equals(isAdmin)) {
+                System.out.println("MATCHED! User has Firebase admin claim. Granting ROLE_ADMIN");
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            } else {
+                // Fallback check: still check if the email is on the admin list, just in case (optional!)
+                String email = (String) jwt.getClaims().get("email");
+                List<String> adminList = Arrays.asList(adminEmails.split(","));
+                
+                if (email != null && adminList.contains(email.trim())) {
+                    System.out.println("No 'admin' claim found, but email is in the admin list. Granting ROLE_ADMIN as fallback.");
+                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                } else {
+                    System.out.println("NOT MATCHED. email=" + email + ", adminClaim=" + isAdmin);
+                }
             }
 
             return authorities;

@@ -13,8 +13,15 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface TransactionRepository extends JpaRepository<TransactionEntity, Integer> {
+
+        @EntityGraph(attributePaths = {"user", "items"})
+        @Query("SELECT t FROM TransactionEntity t")
+        Page<TransactionEntity> findAllWithItems(Pageable pageable);
 
         Optional<TransactionEntity> findByTidAndUser(Integer tid, UserEntity user);
 

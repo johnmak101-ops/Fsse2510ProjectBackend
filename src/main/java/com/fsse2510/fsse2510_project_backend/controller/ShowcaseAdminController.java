@@ -1,6 +1,6 @@
 package com.fsse2510.fsse2510_project_backend.controller;
 
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionAdminData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionAdminData;
 import com.fsse2510.fsse2510_project_backend.data.showcase.dto.request.CreateShowcaseCollectionRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.showcase.dto.request.UpdateShowcaseCollectionRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.showcase.dto.response.ShowcaseCollectionAdminResponseDto;

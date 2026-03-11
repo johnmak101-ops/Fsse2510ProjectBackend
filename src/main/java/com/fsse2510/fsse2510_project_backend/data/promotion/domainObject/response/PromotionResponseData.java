@@ -1,5 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.data.promotion.domainObject.response;
 
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fsse2510.fsse2510_project_backend.data.common.constant.DiscountType;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 public class PromotionResponseData implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

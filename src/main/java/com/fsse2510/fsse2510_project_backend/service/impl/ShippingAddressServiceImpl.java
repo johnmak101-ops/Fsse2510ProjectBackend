@@ -1,10 +1,12 @@
 package com.fsse2510.fsse2510_project_backend.service.impl;
 
-import com.fsse2510.fsse2510_project_backend.data.address.dto.request.CreateShippingAddressRequestDto;
-import com.fsse2510.fsse2510_project_backend.data.address.dto.response.ShippingAddressResponseDto;
+import com.fsse2510.fsse2510_project_backend.data.address.domainObject.request.CreateShippingAddressRequestData;
+import com.fsse2510.fsse2510_project_backend.data.address.domainObject.response.ShippingAddressResponseData;
 import com.fsse2510.fsse2510_project_backend.data.address.entity.ShippingAddressEntity;
 import com.fsse2510.fsse2510_project_backend.data.user.entity.UserEntity;
 import com.fsse2510.fsse2510_project_backend.exception.address.AddressNotFoundException;
+import com.fsse2510.fsse2510_project_backend.mapper.address.AddressDataMapper;
+import com.fsse2510.fsse2510_project_backend.mapper.address.AddressEntityMapper;
 import com.fsse2510.fsse2510_project_backend.repository.ShippingAddressRepository;
 import com.fsse2510.fsse2510_project_backend.service.ShippingAddressService;
 import com.fsse2510.fsse2510_project_backend.service.UserService;
@@ -20,64 +22,47 @@ import java.util.stream.Collectors;
 public class ShippingAddressServiceImpl implements ShippingAddressService {
     private final ShippingAddressRepository addressRepository;
     private final UserService userService;
+    private final AddressEntityMapper addressEntityMapper;
+    private final AddressDataMapper addressDataMapper;
 
     @Override
     @Transactional(readOnly = true)
-    public List<ShippingAddressResponseDto> getAllAddresses(String firebaseUid) {
+    public List<ShippingAddressResponseData> getAllAddresses(String firebaseUid) {
         UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
         return addressRepository.findByUser(user).stream()
-                .map(this::mapToDto)
+                .map(addressDataMapper::toResponseData)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public ShippingAddressResponseDto createAddress(String firebaseUid, CreateShippingAddressRequestDto requestDto) {
+    public ShippingAddressResponseData createAddress(String firebaseUid, CreateShippingAddressRequestData requestData) {
         UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
 
-        if (Boolean.TRUE.equals(requestDto.getIsDefault())) {
+        if (Boolean.TRUE.equals(requestData.getIsDefault())) {
             unsetCurrentDefault(user);
         }
 
-        ShippingAddressEntity entity = ShippingAddressEntity.builder()
-                .user(user)
-                .recipientName(requestDto.getRecipientName())
-                .phoneNumber(requestDto.getPhoneNumber())
-                .addressLine1(requestDto.getAddressLine1())
-                .addressLine2(requestDto.getAddressLine2())
-                .city(requestDto.getCity())
-                .stateProvince(requestDto.getStateProvince())
-                .postalCode(requestDto.getPostalCode())
-                .isDefault(requestDto.getIsDefault())
-                .build();
-
-        return mapToDto(addressRepository.save(entity));
+        ShippingAddressEntity entity = addressEntityMapper.toEntity(requestData, user);
+        return addressDataMapper.toResponseData(addressRepository.save(entity));
     }
 
     @Override
     @Transactional
-    public ShippingAddressResponseDto updateAddress(String firebaseUid, Integer id,
-            CreateShippingAddressRequestDto requestDto) {
+    public ShippingAddressResponseData updateAddress(String firebaseUid, Integer id,
+            CreateShippingAddressRequestData requestData) {
         UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
 
         ShippingAddressEntity entity = addressRepository.findById(id)
                 .filter(a -> a.getUser().getUid().equals(user.getUid()))
                 .orElseThrow(() -> new AddressNotFoundException("Address not found"));
 
-        if (Boolean.TRUE.equals(requestDto.getIsDefault()) && !Boolean.TRUE.equals(entity.getIsDefault())) {
+        if (Boolean.TRUE.equals(requestData.getIsDefault()) && !Boolean.TRUE.equals(entity.getIsDefault())) {
             unsetCurrentDefault(user);
         }
 
-        entity.setRecipientName(requestDto.getRecipientName());
-        entity.setPhoneNumber(requestDto.getPhoneNumber());
-        entity.setAddressLine1(requestDto.getAddressLine1());
-        entity.setAddressLine2(requestDto.getAddressLine2());
-        entity.setCity(requestDto.getCity());
-        entity.setStateProvince(requestDto.getStateProvince());
-        entity.setPostalCode(requestDto.getPostalCode());
-        entity.setIsDefault(requestDto.getIsDefault());
-
-        return mapToDto(addressRepository.save(entity));
+        addressEntityMapper.updateEntity(requestData, entity);
+        return addressDataMapper.toResponseData(addressRepository.save(entity));
     }
 
     @Override
@@ -94,7 +79,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
 
     @Override
     @Transactional
-    public ShippingAddressResponseDto setDefaultAddress(String firebaseUid, Integer id) {
+    public ShippingAddressResponseData setDefaultAddress(String firebaseUid, Integer id) {
         UserEntity user = userService.findEntityByFirebaseUid(firebaseUid);
 
         ShippingAddressEntity entity = addressRepository.findById(id)
@@ -107,7 +92,7 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             addressRepository.save(entity);
         }
 
-        return mapToDto(entity);
+        return addressDataMapper.toResponseData(entity);
     }
 
     private void unsetCurrentDefault(UserEntity user) {
@@ -116,19 +101,5 @@ public class ShippingAddressServiceImpl implements ShippingAddressService {
             currentDefault.setIsDefault(false);
             addressRepository.save(currentDefault);
         }
-    }
-
-    private ShippingAddressResponseDto mapToDto(ShippingAddressEntity entity) {
-        return ShippingAddressResponseDto.builder()
-                .id(entity.getId())
-                .recipientName(entity.getRecipientName())
-                .phoneNumber(entity.getPhoneNumber())
-                .addressLine1(entity.getAddressLine1())
-                .addressLine2(entity.getAddressLine2())
-                .city(entity.getCity())
-                .stateProvince(entity.getStateProvince())
-                .postalCode(entity.getPostalCode())
-                .isDefault(entity.getIsDefault())
-                .build();
     }
 }

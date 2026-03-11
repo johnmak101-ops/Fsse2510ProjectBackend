@@ -36,10 +36,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ProductAdminServiceImpl implements ProductAdminService {
 
-    private static final String CACHE_PRODUCT = "product_v6";
-    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v6";
-    private static final String CACHE_ATTRIBUTES = "product_attributes_v6";
-    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v3";
+    private static final String CACHE_PRODUCT = "product_v8";
+    private static final String CACHE_RECOMMENDATIONS = "product_recommendations_v8";
+    private static final String CACHE_ATTRIBUTES = "product_attributes_v8";
+    private static final String CACHE_SHOWCASE_PRODUCTS = "product_showcase_v5";
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
@@ -127,6 +127,23 @@ public class ProductAdminServiceImpl implements ProductAdminService {
         ProductInventoryEntity inventory = productInventoryRepository.findBySku(sku)
                 .orElseThrow(() -> new ProductNotFoundException("SKU not found: " + sku));
         evictProductCache(inventory.getProduct());
+    }
+
+    @Override
+    @Transactional
+    public void deductStock(java.util.Map<String, Integer> skuQuantityMap) {
+        if (skuQuantityMap == null || skuQuantityMap.isEmpty()) return;
+        for (java.util.Map.Entry<String, Integer> entry : skuQuantityMap.entrySet()) {
+            int updatedRows = productInventoryRepository.deductStock(entry.getKey(), entry.getValue());
+            if (updatedRows == 0) {
+                throw new NotEnoughStockException("SKU not found OR Insufficient stock for SKU: " + entry.getKey());
+            }
+        }
+        java.util.List<String> skus = new java.util.ArrayList<>(skuQuantityMap.keySet());
+        java.util.List<ProductInventoryEntity> inventories = productInventoryRepository.findBySkuInWithProduct(skus);
+        for (ProductInventoryEntity inventory : inventories) {
+            evictProductCache(inventory.getProduct());
+        }
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────

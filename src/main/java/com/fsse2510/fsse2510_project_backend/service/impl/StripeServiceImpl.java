@@ -57,6 +57,7 @@ public class StripeServiceImpl implements StripeService {
                                     .build())
                     .putMetadata("tid", tid.toString())
                     .putMetadata("uid", firebaseUser.getFirebaseUid())
+                    .setExpiresAt(System.currentTimeMillis() / 1000 + (30 * 60)) // 30 minutes from now
                     .build();
 
             return Session.create(params);

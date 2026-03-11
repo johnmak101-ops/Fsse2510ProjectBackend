@@ -9,6 +9,7 @@ import com.fsse2510.fsse2510_project_backend.data.navigation.dto.request.UpdateN
 import com.fsse2510.fsse2510_project_backend.data.navigation.dto.response.NavigationItemResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.navigation.dto.response.NavigationOptionsResponseDto;
 import com.fsse2510.fsse2510_project_backend.mapper.navigation.NavigationItemDtoMapper;
+import com.fsse2510.fsse2510_project_backend.mapper.navigation.NavigationItemDataMapper;
 import com.fsse2510.fsse2510_project_backend.service.NavigationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,6 +30,7 @@ public class NavigationController {
 
     private final NavigationService navigationService;
     private final NavigationItemDtoMapper navigationItemDtoMapper;
+    private final NavigationItemDataMapper navigationItemDataMapper;
 
     /**
      * Retrieves the public navigation menu for the shop frontend.
@@ -79,9 +81,8 @@ public class NavigationController {
      * @return The created NavigationItemResponseDto.
      */
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/admin/navigation")
     public NavigationItemResponseDto createItem(@RequestBody @Valid CreateNavigationItemRequestDto createDto) {
-        CreateNavigationItemRequestData createData = navigationItemDtoMapper.toCreateRequestData(createDto);
+        CreateNavigationItemRequestData createData = navigationItemDataMapper.toCreateRequestData(createDto);
         NavigationItemData result = navigationService.createItem(createData);
         return navigationItemDtoMapper.toResponseDto(result);
     }
@@ -101,7 +102,7 @@ public class NavigationController {
     @PutMapping("/admin/navigation/{id}")
     public NavigationItemResponseDto updateItem(@PathVariable Integer id,
             @RequestBody @Valid UpdateNavigationItemRequestDto updateDto) {
-        UpdateNavigationItemRequestData updateData = navigationItemDtoMapper.toUpdateRequestData(id, updateDto);
+        UpdateNavigationItemRequestData updateData = navigationItemDataMapper.toUpdateRequestData(id, updateDto);
         NavigationItemData result = navigationService.updateItem(updateData);
         return navigationItemDtoMapper.toResponseDto(result);
     }

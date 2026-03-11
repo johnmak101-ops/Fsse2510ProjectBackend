@@ -1,9 +1,9 @@
 package com.fsse2510.fsse2510_project_backend.service.impl;
 
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.ShowcaseCollectionAdminData;
+import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionAdminData;
 import com.fsse2510.fsse2510_project_backend.data.showcase.entity.ShowcaseCollectionEntity;
 import com.fsse2510.fsse2510_project_backend.exception.showcase.ShowcaseCollectionNotFoundException;
-import com.fsse2510.fsse2510_project_backend.mapper.showcase.ShowcaseEntityMapper;
+import com.fsse2510.fsse2510_project_backend.mapper.showcase.ShowcaseDataMapper;
 import com.fsse2510.fsse2510_project_backend.repository.ShowcaseCollectionRepository;
 import com.fsse2510.fsse2510_project_backend.service.ShowcaseAdminService;
 import lombok.RequiredArgsConstructor;
@@ -17,16 +17,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ShowcaseAdminServiceImpl implements ShowcaseAdminService {
 
-    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v3";
+    private static final String CACHE_SHOWCASE_COLLECTIONS = "showcase_collections_v5";
 
     private final ShowcaseCollectionRepository showcaseCollectionRepository;
-    private final ShowcaseEntityMapper showcaseEntityMapper;
+    private final ShowcaseDataMapper showcaseDataMapper;
 
     @Override
     @Transactional(readOnly = true)
     public List<ShowcaseCollectionAdminData> getAll() {
         return showcaseCollectionRepository.findAll().stream()
-                .map(showcaseEntityMapper::toAdminData)
+                .map(showcaseDataMapper::toAdminData)
                 .toList();
     }
 
@@ -44,7 +44,7 @@ public class ShowcaseAdminServiceImpl implements ShowcaseAdminService {
                 .build();
 
         ShowcaseCollectionEntity saved = showcaseCollectionRepository.save(entity);
-        return showcaseEntityMapper.toAdminData(saved);
+        return showcaseDataMapper.toAdminData(saved);
     }
 
     @Override
@@ -62,7 +62,7 @@ public class ShowcaseAdminServiceImpl implements ShowcaseAdminService {
         existing.setActive(data.isActive());
 
         ShowcaseCollectionEntity saved = showcaseCollectionRepository.save(existing);
-        return showcaseEntityMapper.toAdminData(saved);
+        return showcaseDataMapper.toAdminData(saved);
     }
 
     @Override

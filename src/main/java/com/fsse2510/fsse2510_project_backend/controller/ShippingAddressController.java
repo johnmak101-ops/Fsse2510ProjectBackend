@@ -1,7 +1,9 @@
 package com.fsse2510.fsse2510_project_backend.controller;
 
+import com.fsse2510.fsse2510_project_backend.data.address.domainObject.request.CreateShippingAddressRequestData;
 import com.fsse2510.fsse2510_project_backend.data.address.dto.request.CreateShippingAddressRequestDto;
 import com.fsse2510.fsse2510_project_backend.data.address.dto.response.ShippingAddressResponseDto;
+import com.fsse2510.fsse2510_project_backend.mapper.address.AddressDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.ShippingAddressService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,12 +19,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/addresses")
 @RequiredArgsConstructor
 public class ShippingAddressController {
     private final ShippingAddressService addressService;
+    private final AddressDtoMapper addressDtoMapper;
 
     private String getFirebaseUid(JwtAuthenticationToken token) {
         return token.getToken().getSubject();
@@ -30,20 +34,26 @@ public class ShippingAddressController {
 
     @GetMapping
     public List<ShippingAddressResponseDto> getAllAddresses(JwtAuthenticationToken token) {
-        return addressService.getAllAddresses(getFirebaseUid(token));
+        return addressService.getAllAddresses(getFirebaseUid(token)).stream()
+                .map(addressDtoMapper::toResponseDto)
+                .collect(Collectors.toList());
     }
 
     @PostMapping
     public ShippingAddressResponseDto createAddress(JwtAuthenticationToken token,
             @Valid @RequestBody CreateShippingAddressRequestDto requestDto) {
-        return addressService.createAddress(getFirebaseUid(token), requestDto);
+        CreateShippingAddressRequestData requestData = addressDtoMapper.toRequestData(requestDto);
+        return addressDtoMapper.toResponseDto(
+                addressService.createAddress(getFirebaseUid(token), requestData));
     }
 
     @PutMapping("/{id}")
     public ShippingAddressResponseDto updateAddress(JwtAuthenticationToken token,
             @PathVariable Integer id,
             @Valid @RequestBody CreateShippingAddressRequestDto requestDto) {
-        return addressService.updateAddress(getFirebaseUid(token), id, requestDto);
+        CreateShippingAddressRequestData requestData = addressDtoMapper.toRequestData(requestDto);
+        return addressDtoMapper.toResponseDto(
+                addressService.updateAddress(getFirebaseUid(token), id, requestData));
     }
 
     @DeleteMapping("/{id}")
@@ -53,6 +63,7 @@ public class ShippingAddressController {
 
     @PatchMapping("/{id}/default")
     public ShippingAddressResponseDto setDefaultAddress(JwtAuthenticationToken token, @PathVariable Integer id) {
-        return addressService.setDefaultAddress(getFirebaseUid(token), id);
+        return addressDtoMapper.toResponseDto(
+                addressService.setDefaultAddress(getFirebaseUid(token), id));
     }
 }

@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -32,6 +33,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString
 public class TransactionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,6 +42,7 @@ public class TransactionEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "buyer_uid", nullable = false)
+    @ToString.Exclude
     private UserEntity user;
 
     @Column(name = "datetime", nullable = false)
@@ -54,6 +57,7 @@ public class TransactionEntity {
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
     @Builder.Default
+    @ToString.Exclude
     private List<TransactionProductEntity> items = new ArrayList<>();
 
     @Column(name = "used_points")
@@ -72,24 +76,31 @@ public class TransactionEntity {
 
     // Shipping Address Snapshot
     @Column(name = "recipient_name")
+    @ToString.Exclude
     private String recipientName;
 
     @Column(name = "phone_number")
+    @ToString.Exclude
     private String phoneNumber;
 
     @Column(name = "address_line_1")
+    @ToString.Exclude
     private String addressLine1;
 
     @Column(name = "address_line_2")
+    @ToString.Exclude
     private String addressLine2;
 
     @Column(name = "city")
+    @ToString.Exclude
     private String city;
 
     @Column(name = "state_province")
+    @ToString.Exclude
     private String stateProvince;
 
     @Column(name = "postal_code")
+    @ToString.Exclude
     private String postalCode;
 
     @Version
