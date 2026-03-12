@@ -299,8 +299,25 @@ public class TransactionServiceImpl implements TransactionService {
     @Override
     @Transactional(readOnly = true)
     public Page<TransactionResponseData> getAllTransactions(Pageable pageable) {
-        return transactionRepository.findAllWithItems(pageable)
-                .map(transactionDataMapper::toData);
+        // Step 1: Paginate IDs at SQL level (no collection join = correct row count)
+        Page<Integer> idPage = transactionRepository.findAllTransactionIds(pageable);
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // Step 2: Fetch full entities with items for just those IDs
+        List<TransactionEntity> entities = transactionRepository.findAllByTidIn(idPage.getContent());
+
+        // Step 3: Preserve page order via ID map
+        Map<Integer, TransactionEntity> entityMap = entities.stream()
+                .collect(Collectors.toMap(TransactionEntity::getTid, java.util.function.Function.identity()));
+        List<TransactionResponseData> content = idPage.getContent().stream()
+                .map(entityMap::get)
+                .filter(java.util.Objects::nonNull)
+                .map(transactionDataMapper::toData)
+                .collect(Collectors.toList());
+
+        return new org.springframework.data.domain.PageImpl<>(content, pageable, idPage.getTotalElements());
     }
 
     @Override
