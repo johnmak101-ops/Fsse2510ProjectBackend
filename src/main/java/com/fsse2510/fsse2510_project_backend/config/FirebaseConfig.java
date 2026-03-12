@@ -39,6 +39,7 @@ public class FirebaseConfig {
             log.info("Firebase Admin SDK initialized successfully!");
         } catch (Exception e) {
             log.error("Failed to initialize Firebase Admin SDK", e);
+            throw new RuntimeException("Firebase Admin SDK initialization failed — app cannot start without auth", e);
         }
     }
 

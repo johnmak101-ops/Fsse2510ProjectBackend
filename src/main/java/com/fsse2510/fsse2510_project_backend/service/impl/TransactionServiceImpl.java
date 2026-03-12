@@ -9,6 +9,7 @@ import com.fsse2510.fsse2510_project_backend.data.payment.domainObject.response.
 import com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.request.CreateTransactionRequestData;
 import com.fsse2510.fsse2510_project_backend.data.transaction.domainObject.response.TransactionResponseData;
 import com.fsse2510.fsse2510_project_backend.data.transaction.entity.TransactionEntity;
+import com.fsse2510.fsse2510_project_backend.data.transaction.projection.SkuQuantityProjection;
 import com.fsse2510.fsse2510_project_backend.data.transaction.status.PaymentStatus;
 import com.fsse2510.fsse2510_project_backend.data.transactionProduct.entity.TransactionProductEntity;
 import com.fsse2510.fsse2510_project_backend.data.user.domainObject.request.FirebaseUserData;
@@ -32,6 +33,7 @@ import com.fsse2510.fsse2510_project_backend.service.StripeService;
 import com.fsse2510.fsse2510_project_backend.service.TransactionService;
 import com.fsse2510.fsse2510_project_backend.service.UserService;
 import com.fsse2510.fsse2510_project_backend.util.BusinessConstants;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY_ROUNDING;
 import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.POINTS_ROUNDING;
@@ -44,7 +46,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -142,6 +143,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional
     public TransactionResponseData finishTransaction(FirebaseUserData firebaseUser, Integer tid, String sessionId) {
         TransactionEntity transaction = getOwnedTransaction(firebaseUser, tid);
 
@@ -558,8 +560,8 @@ public class TransactionServiceImpl implements TransactionService {
         return transactionRepository.sumPendingQuantityBySkuIn(skus, ACTIVE_PENDING_STATUSES)
                 .stream()
                 .collect(Collectors.toMap(
-                        row -> (String) row[0],
-                        row -> ((Number) row[1]).longValue()));
+                        SkuQuantityProjection::getSku,
+                        SkuQuantityProjection::getTotalQuantity));
     }
 
     private BigDecimal getVirtualPoints(Integer uid, BigDecimal currentPoints) {

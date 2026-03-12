@@ -1,6 +1,7 @@
 package com.fsse2510.fsse2510_project_backend.repository;
 
 import com.fsse2510.fsse2510_project_backend.data.transaction.entity.TransactionEntity;
+import com.fsse2510.fsse2510_project_backend.data.transaction.projection.SkuQuantityProjection;
 import com.fsse2510.fsse2510_project_backend.data.transaction.status.PaymentStatus;
 import com.fsse2510.fsse2510_project_backend.data.user.entity.UserEntity;
 import jakarta.persistence.LockModeType;
@@ -39,8 +40,8 @@ public interface TransactionRepository extends JpaRepository<TransactionEntity, 
         @Query("SELECT SUM(tp.quantity) FROM TransactionEntity t JOIN t.items tp WHERE tp.sku = :sku AND t.status IN :statuses")
         Long sumPendingQuantityBySku(@Param("sku") String sku, @Param("statuses") Collection<PaymentStatus> statuses);
 
-        @Query("SELECT tp.sku, SUM(tp.quantity) FROM TransactionEntity t JOIN t.items tp WHERE tp.sku IN :skus AND t.status IN :statuses GROUP BY tp.sku")
-        List<Object[]> sumPendingQuantityBySkuIn(@Param("skus") Collection<String> skus, @Param("statuses") Collection<PaymentStatus> statuses);
+        @Query("SELECT tp.sku AS sku, SUM(tp.quantity) AS totalQuantity FROM TransactionEntity t JOIN t.items tp WHERE tp.sku IN :skus AND t.status IN :statuses GROUP BY tp.sku")
+        List<SkuQuantityProjection> sumPendingQuantityBySkuIn(@Param("skus") Collection<String> skus, @Param("statuses") Collection<PaymentStatus> statuses);
 
         @Query("SELECT SUM(t.usedPoints) FROM TransactionEntity t WHERE t.user.uid = :uid AND t.status IN :statuses")
         Long sumPendingPointsByUser(@Param("uid") Integer uid, @Param("statuses") Collection<PaymentStatus> statuses);

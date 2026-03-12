@@ -3,7 +3,8 @@ package com.fsse2510.fsse2510_project_backend.config;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.PolymorphicTypeValidator;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -26,8 +27,15 @@ public class CacheConfig {
                 ObjectMapper mapper = new ObjectMapper();
                 mapper.registerModule(new JavaTimeModule());
                 mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                PolymorphicTypeValidator ptv = BasicPolymorphicTypeValidator.builder()
+                        .allowIfBaseType("com.fsse2510.")
+                        .allowIfBaseType("java.util.")
+                        .allowIfBaseType("java.math.")
+                        .allowIfBaseType("java.time.")
+                        .allowIfBaseType("java.lang.")
+                        .build();
                 mapper.activateDefaultTyping(
-                                LaissezFaireSubTypeValidator.instance,
+                                ptv,
                                 ObjectMapper.DefaultTyping.NON_FINAL,
                                 JsonTypeInfo.As.PROPERTY);
 
