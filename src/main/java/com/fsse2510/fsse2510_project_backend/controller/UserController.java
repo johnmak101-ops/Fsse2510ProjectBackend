@@ -31,9 +31,10 @@ public class UserController {
     private final UserDtoMapper userDtoMapper;
 
     private FirebaseUserData getFirebaseUser(JwtAuthenticationToken token) {
+        String email = (String) token.getTokenAttributes().get("email");
         return FirebaseUserData.builder()
                 .firebaseUid(token.getToken().getSubject())
-                .email((String) token.getTokenAttributes().get("email"))
+                .email(email != null ? email.trim() : null)
                 .build();
     }
 

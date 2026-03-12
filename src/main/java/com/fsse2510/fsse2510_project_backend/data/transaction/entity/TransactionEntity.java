@@ -17,6 +17,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
+import org.hibernate.annotations.BatchSize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -56,6 +57,7 @@ public class TransactionEntity {
     private BigDecimal total;
 
     @OneToMany(mappedBy = "transaction", cascade = CascadeType.ALL)
+    @BatchSize(size = 20)
     @Builder.Default
     @ToString.Exclude
     private List<TransactionProductEntity> items = new ArrayList<>();

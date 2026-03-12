@@ -42,10 +42,12 @@ public interface ProductRepository
         Slice<Integer> findResultIdsByCategoryAndPidNot(@Param("category") String category, @Param("pid") Integer pid,
                         Pageable pageable);
 
+        // Secondary sort by pid ensures stable ordering when featured/new values are equal
         @Query("SELECT p.pid FROM ProductEntity p ORDER BY p.isFeatured DESC, p.featuredPriority DESC, p.isNew DESC, p.pid DESC")
         Slice<Integer> findShowcaseProductIds(Pageable pageable);
 
-        @Query("SELECT p.pid FROM ProductEntity p")
+        // ORDER BY pid DESC ensures stable, consistent pagination results across requests
+        @Query("SELECT p.pid FROM ProductEntity p ORDER BY p.pid DESC")
         Slice<Integer> findAllProductIds(Pageable pageable);
 
         @Query("SELECT DISTINCT p FROM ProductEntity p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.collection LEFT JOIN FETCH p.promotion WHERE p.pid IN :pids")

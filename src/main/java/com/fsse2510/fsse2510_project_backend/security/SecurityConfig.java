@@ -1,4 +1,6 @@
 package com.fsse2510.fsse2510_project_backend.security;
+ 
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +24,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // Enable @PreAuthorize support
+@Slf4j
 public class SecurityConfig {
     @Value("${app.admin.emails:admin@user.com}")
     private String adminEmails;
@@ -60,14 +63,14 @@ public class SecurityConfig {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Collection<GrantedAuthority> authorities = new ArrayList<>();
 
-            System.out.println("--- JWT Auth Checking ---");
+            log.debug("--- JWT Auth Checking ---");
             
             // Check for the custom claim "admin"
             Boolean isAdmin = (Boolean) jwt.getClaims().get("admin");
-            System.out.println("Is Admin Claim present & true? " + isAdmin);
+            log.debug("Is Admin Claim present & true? {}", isAdmin);
 
             if (Boolean.TRUE.equals(isAdmin)) {
-                System.out.println("MATCHED! User has Firebase admin claim. Granting ROLE_ADMIN");
+                log.info("MATCHED! User has Firebase admin claim. Granting ROLE_ADMIN");
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
             } else {
                 // Fallback check: still check if the email is on the admin list, just in case (optional!)
@@ -75,10 +78,10 @@ public class SecurityConfig {
                 List<String> adminList = Arrays.asList(adminEmails.split(","));
                 
                 if (email != null && adminList.contains(email.trim())) {
-                    System.out.println("No 'admin' claim found, but email is in the admin list. Granting ROLE_ADMIN as fallback.");
+                    log.info("No 'admin' claim found, but email is in the admin list. Granting ROLE_ADMIN as fallback.");
                     authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
                 } else {
-                    System.out.println("NOT MATCHED. email=" + email + ", adminClaim=" + isAdmin);
+                    log.debug("NOT MATCHED. email={}, adminClaim={}", email, isAdmin);
                 }
             }
 

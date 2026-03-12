@@ -81,7 +81,7 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
         if (affectedProducts.isEmpty())
             return;
 
-        List<PromotionEntity> activePromotions = promotionRepository.findActivePromotions(LocalDateTime.now())
+        List<PromotionEntity> activePromotions = promotionRepository.findActivePromotionsWithTargets(LocalDateTime.now())
                 .stream()
                 .filter(p -> !p.getId().equals(promotionId))
                 .toList();
@@ -102,7 +102,7 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
         logger.info("Starting sync removal of promotion: id={}", promotionId);
 
         List<PromotionEntity> activePromotions = promotionRepository
-                .findActivePromotions(LocalDateTime.now())
+                .findActivePromotionsWithTargets(LocalDateTime.now())
                 .stream()
                 .filter(p -> !p.getId().equals(promotionId))
                 .toList();
@@ -123,7 +123,7 @@ public class PromotionProductSyncServiceImpl implements PromotionProductSyncServ
 
         LocalDateTime now = LocalDateTime.now();
         List<PromotionEntity> expiredPromotions = promotionRepository.findExpiredPromotions(now);
-        List<PromotionEntity> activePromotions = promotionRepository.findActivePromotions(now);
+        List<PromotionEntity> activePromotions = promotionRepository.findActivePromotionsWithTargets(now);
 
         logger.info("Found {} expired promotions", expiredPromotions.size());
 

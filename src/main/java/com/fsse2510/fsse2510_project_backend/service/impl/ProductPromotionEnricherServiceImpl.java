@@ -210,7 +210,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         if (product == null)
             return null;
         PromotionIndex index = getCachedPromotionIndex();
-        if (index == null || index.isEmpty())
+        if (index.isEmpty())
             return setNoDiscount(product);
         return applyBestPromotion(product, index, entity);
     }
@@ -245,7 +245,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
             return dtos;
 
         PromotionIndex index = getCachedPromotionIndex();
-        if (index == null || index.isEmpty()) {
+        if (index.isEmpty()) {
             return dtos.stream().map(this::setNoDiscount).toList();
         }
 

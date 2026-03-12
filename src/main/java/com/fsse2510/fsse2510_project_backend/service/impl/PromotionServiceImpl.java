@@ -240,7 +240,7 @@ public class PromotionServiceImpl implements PromotionService {
     public List<PromotionResponseData> getActivePublicPromotions(List<PromotionType> types) {
         LocalDateTime now = LocalDateTime.now();
         List<PromotionEntity> active = (types == null || types.isEmpty())
-                ? promotionRepository.findActivePromotions(now)
+                ? promotionRepository.findActivePromotionsWithTargets(now)
                 : promotionRepository.findActiveByType(types, now);
         return active.stream()
                 .map(promotionDataMapper::toResponseData)

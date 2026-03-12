@@ -16,9 +16,7 @@ public interface PromotionRepository extends JpaRepository<PromotionEntity, Inte
         @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
         List<PromotionEntity> findDistinctByTypeIn(List<PromotionType> types);
 
-        @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
-        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
-        List<PromotionEntity> findActivePromotions(@Param("now") LocalDateTime now);
+        // Removed duplicate findActivePromotions — use findActivePromotionsWithTargets instead
 
         @EntityGraph(attributePaths = { "targetPids", "targetCategories", "targetCollections", "targetTags" })
         @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")

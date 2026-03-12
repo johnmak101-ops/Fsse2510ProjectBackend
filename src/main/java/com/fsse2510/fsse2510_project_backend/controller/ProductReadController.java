@@ -6,7 +6,6 @@ import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductAttributesResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductDetailResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.product.dto.response.ProductSummaryResponseDto;
-import com.fsse2510.fsse2510_project_backend.data.showcase.domainObject.response.ShowcaseCollectionData;
 import com.fsse2510.fsse2510_project_backend.data.showcase.dto.response.ShowcaseCollectionResponseDto;
 import com.fsse2510.fsse2510_project_backend.mapper.product.ProductDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.ProductService;
@@ -32,27 +31,17 @@ public class ProductReadController {
         public SliceResponseDto<ProductSummaryResponseDto> getAllProducts(
                         @RequestParam(defaultValue = "0") int page,
                         @RequestParam(defaultValue = "10") int size) {
-                SliceResponseDto<ProductSummaryData> slice = productService.getAllProducts(page, size);
-                if (slice == null || slice.getContent() == null) {
-                        return SliceResponseDto.of(List.of(), false);
-                }
-                return SliceResponseDto.of(
-                                slice.getContent().stream()
-                                                .map(productDtoMapper::toSummaryResponseDto)
-                                                .toList(),
-                                slice.isHasNext());
+                return toSliceResponseDto(productService.getAllProducts(page, size));
         }
 
         @GetMapping("/{id}")
         public ProductDetailResponseDto getProductById(@PathVariable Integer id) {
-                return productDtoMapper.toDetailResponseDto(
-                                productService.getProductById(id));
+                return productDtoMapper.toDetailResponseDto(productService.getProductById(id));
         }
 
         @GetMapping("/slug/{slug}")
         public ProductDetailResponseDto getProductBySlug(@PathVariable String slug) {
-                return productDtoMapper.toDetailResponseDto(
-                                productService.getProductBySlug(slug));
+                return productDtoMapper.toDetailResponseDto(productService.getProductBySlug(slug));
         }
 
         @GetMapping("/recommendations")
@@ -60,31 +49,13 @@ public class ProductReadController {
                         @RequestParam String category,
                         @RequestParam Integer currentPid,
                         @RequestParam(defaultValue = "12") int limit) {
-                SliceResponseDto<ProductSummaryData> slice = productService
-                                .getRelatedProducts(category, currentPid, limit);
-                if (slice == null || slice.getContent() == null) {
-                        return SliceResponseDto.of(List.of(), false);
-                }
-                return SliceResponseDto.of(
-                                slice.getContent().stream()
-                                                .map(productDtoMapper::toSummaryResponseDto)
-                                                .toList(),
-                                slice.isHasNext());
+                return toSliceResponseDto(productService.getRelatedProducts(category, currentPid, limit));
         }
 
         @GetMapping("/showcase")
         public SliceResponseDto<ProductSummaryResponseDto> getShowcase(
                         @RequestParam(defaultValue = "12") int limit) {
-                SliceResponseDto<ProductSummaryData> slice = productService
-                                .getShowcaseProducts(limit);
-                if (slice == null || slice.getContent() == null) {
-                        return SliceResponseDto.of(List.of(), false);
-                }
-                return SliceResponseDto.of(
-                                slice.getContent().stream()
-                                                .map(productDtoMapper::toSummaryResponseDto)
-                                                .toList(),
-                                slice.isHasNext());
+                return toSliceResponseDto(productService.getShowcaseProducts(limit));
         }
 
         @GetMapping("/you-may-also-like")
@@ -92,25 +63,12 @@ public class ProductReadController {
                         @RequestParam String collection,
                         @RequestParam Integer currentPid,
                         @RequestParam(defaultValue = "4") int limit) {
-                SliceResponseDto<ProductSummaryData> slice = productService.getYouMayAlsoLike(collection, currentPid,
-                                limit);
-                if (slice == null || slice.getContent() == null) {
-                        return SliceResponseDto.of(List.of(), false);
-                }
-                return SliceResponseDto.of(
-                                slice.getContent().stream()
-                                                .map(productDtoMapper::toSummaryResponseDto)
-                                                .toList(),
-                                slice.isHasNext());
+                return toSliceResponseDto(productService.getYouMayAlsoLike(collection, currentPid, limit));
         }
 
         @GetMapping("/showcase/collections")
         public List<ShowcaseCollectionResponseDto> getShowcaseCollections() {
-                List<ShowcaseCollectionData> collections = productService.getShowcaseCollections();
-                if (collections == null) {
-                        return List.of();
-                }
-                return collections.stream()
+                return productService.getShowcaseCollections().stream()
                                 .map(productDtoMapper::toShowcaseDto)
                                 .toList();
         }
@@ -143,22 +101,22 @@ public class ProductReadController {
                                 .searchText(searchText)
                                 .build();
 
-                SliceResponseDto<ProductSummaryData> slice = productService.searchProducts(criteria, page, limit);
+                return toSliceResponseDto(productService.searchProducts(criteria, page, limit));
+        }
 
-                if (slice == null || slice.getContent() == null) {
-                        return SliceResponseDto.of(List.of(), false);
-                }
+        @GetMapping("/attributes")
+        public ProductAttributesResponseDto getAttributes() {
+                return productDtoMapper.toAttributesResponseDto(productService.getAttributes());
+        }
 
+        // ── Helper ──────────────────────────────────────────────────────────────────
+        // Service always returns non-null SliceResponseDto; null checks were redundant.
+        private SliceResponseDto<ProductSummaryResponseDto> toSliceResponseDto(
+                        SliceResponseDto<ProductSummaryData> slice) {
                 return SliceResponseDto.of(
                                 slice.getContent().stream()
                                                 .map(productDtoMapper::toSummaryResponseDto)
                                                 .toList(),
                                 slice.isHasNext());
-        }
-
-        @GetMapping("/attributes")
-        public ProductAttributesResponseDto getAttributes() {
-                return productDtoMapper.toAttributesResponseDto(
-                                productService.getAttributes());
         }
 }

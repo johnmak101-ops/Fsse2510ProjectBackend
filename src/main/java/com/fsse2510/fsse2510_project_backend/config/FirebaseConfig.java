@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.FileInputStream;
+import org.springframework.core.io.Resource;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -21,42 +21,37 @@ public class FirebaseConfig {
     @Value("${firebase.credentials.path:}")
     private String firebaseCredentialsPath;
 
+    @Value("classpath:fsse2510-project-john-firebase-adminsdk.json")
+    private Resource defaultCredentials;
+
     @PostConstruct
     public void initialize() {
-        try {
-            if (FirebaseApp.getApps().isEmpty()) {
-                InputStream serviceAccount = null;
-                try {
-                    if (firebaseCredentialsPath != null && !firebaseCredentialsPath.isBlank()) {
-                        log.info("Initializing Firebase using credentials path: {}", firebaseCredentialsPath);
-                        serviceAccount = new FileInputStream(firebaseCredentialsPath);
-                    } else {
-                        log.info("Initializing Firebase using bundled resource credentials.");
-                        serviceAccount = getClass().getClassLoader()
-                                .getResourceAsStream("fsse2510-project-john-firebase-adminsdk.json");
-                        if (serviceAccount == null) {
-                            throw new RuntimeException("Firebase Admin key json not found in resources!");
-                        }
-                    }
+        if (!FirebaseApp.getApps().isEmpty()) {
+            return;
+        }
 
-                    FirebaseOptions options = FirebaseOptions.builder()
-                            .setCredentials(GoogleCredentials.fromStream(serviceAccount))
-                            .build();
+        try (InputStream serviceAccount = getCredentialsStream()) {
+            FirebaseOptions options = FirebaseOptions.builder()
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
+                    .build();
 
-                    FirebaseApp.initializeApp(options);
-                    log.info("Firebase Admin SDK initialized successfully!");
-                } finally {
-                    if (serviceAccount != null) {
-                        try {
-                            serviceAccount.close();
-                        } catch (IOException e) {
-                            log.warn("Failed to close Firebase service account stream", e);
-                        }
-                    }
-                }
-            }
+            FirebaseApp.initializeApp(options);
+            log.info("Firebase Admin SDK initialized successfully!");
         } catch (Exception e) {
             log.error("Failed to initialize Firebase Admin SDK", e);
         }
+    }
+
+    private InputStream getCredentialsStream() throws IOException {
+        if (firebaseCredentialsPath != null && !firebaseCredentialsPath.isBlank()) {
+            log.info("Initializing Firebase using credentials file: {}", firebaseCredentialsPath);
+            return new org.springframework.core.io.FileSystemResource(firebaseCredentialsPath).getInputStream();
+        }
+        
+        log.info("Initializing Firebase using bundled resource credentials.");
+        if (defaultCredentials == null || !defaultCredentials.exists()) {
+            throw new RuntimeException("Firebase Admin key json not found in resources!");
+        }
+        return defaultCredentials.getInputStream();
     }
 }

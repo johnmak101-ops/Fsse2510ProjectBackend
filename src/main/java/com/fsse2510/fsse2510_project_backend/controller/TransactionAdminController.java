@@ -1,5 +1,6 @@
 package com.fsse2510.fsse2510_project_backend.controller;
 
+import com.fsse2510.fsse2510_project_backend.data.common.dto.response.PageResponseDto;
 import com.fsse2510.fsse2510_project_backend.data.transaction.dto.response.TransactionResponseDto;
 import com.fsse2510.fsse2510_project_backend.mapper.transaction.TransactionDtoMapper;
 import com.fsse2510.fsse2510_project_backend.service.TransactionService;
@@ -28,10 +29,11 @@ public class TransactionAdminController {
     private final TransactionDtoMapper transactionDtoMapper;
 
     @GetMapping
-    public Page<TransactionResponseDto> getAllTransactions(
+    public PageResponseDto<TransactionResponseDto> getAllTransactions(
             @PageableDefault(size = 20, sort = "datetime", direction = Sort.Direction.DESC) Pageable pageable) {
-        return transactionService.getAllTransactions(pageable)
+        Page<TransactionResponseDto> transactionPage = transactionService.getAllTransactions(pageable)
                 .map(transactionDtoMapper::toDto);
+        return PageResponseDto.of(transactionPage);
     }
 
     @GetMapping("/{tid}")
