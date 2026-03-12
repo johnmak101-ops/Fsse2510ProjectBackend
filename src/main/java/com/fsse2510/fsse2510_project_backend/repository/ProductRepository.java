@@ -50,7 +50,7 @@ public interface ProductRepository
         @Query("SELECT p.pid FROM ProductEntity p ORDER BY p.pid DESC")
         Slice<Integer> findAllProductIds(Pageable pageable);
 
-        @Query("SELECT DISTINCT p FROM ProductEntity p LEFT JOIN FETCH p.category LEFT JOIN FETCH p.collection LEFT JOIN FETCH p.promotion WHERE p.pid IN :pids")
+        @Query("SELECT DISTINCT p FROM ProductEntity p LEFT JOIN FETCH p.inventories LEFT JOIN FETCH p.category LEFT JOIN FETCH p.collection LEFT JOIN FETCH p.promotion WHERE p.pid IN :pids")
         List<ProductEntity> findAllByPidIn(@Param("pids") Collection<Integer> pids);
 
         @Query(value = """
