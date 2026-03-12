@@ -20,9 +20,13 @@ import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface TransactionRepository extends JpaRepository<TransactionEntity, Integer> {
 
-        @EntityGraph(attributePaths = {"user"})
+        @EntityGraph(attributePaths = {"user", "items"})
         @Query("SELECT t FROM TransactionEntity t")
         Page<TransactionEntity> findAllWithItems(Pageable pageable);
+
+        @EntityGraph(attributePaths = {"user", "items"})
+        @Query("SELECT t FROM TransactionEntity t WHERE t.tid = :tid")
+        Optional<TransactionEntity> findByIdWithItems(@Param("tid") Integer tid);
 
         Optional<TransactionEntity> findByTidAndUser(Integer tid, UserEntity user);
 

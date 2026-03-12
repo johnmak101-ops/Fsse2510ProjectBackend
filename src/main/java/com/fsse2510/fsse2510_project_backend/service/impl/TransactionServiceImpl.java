@@ -297,14 +297,16 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<TransactionResponseData> getAllTransactions(Pageable pageable) {
         return transactionRepository.findAllWithItems(pageable)
                 .map(transactionDataMapper::toData);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TransactionResponseData getAdminTransactionById(Integer tid) {
-        return transactionDataMapper.toData(transactionRepository.findById(tid)
+        return transactionDataMapper.toData(transactionRepository.findByIdWithItems(tid)
                 .orElseThrow(() -> new TransactionNotFoundException("Transaction not found: " + tid)));
     }
 
