@@ -72,6 +72,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PromotionResponseData> getAllPromotions() {
         return promotionRepository.findAll().stream()
                 .map(promotionDataMapper::toResponseData)
@@ -79,6 +80,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PromotionResponseData getPromotionById(Integer id) {
         PromotionEntity entity = promotionRepository.findById(id)
                 .orElseThrow(() -> {
@@ -228,6 +230,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PromotionResponseData> getActivePromotionsByType(List<PromotionType> types) {
         // Currently, fetch all matching Types; expiry check is handled by the
         // Calculator
@@ -237,6 +240,7 @@ public class PromotionServiceImpl implements PromotionService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<PromotionResponseData> getActivePublicPromotions(List<PromotionType> types) {
         LocalDateTime now = LocalDateTime.now();
         List<PromotionEntity> active = (types == null || types.isEmpty())
