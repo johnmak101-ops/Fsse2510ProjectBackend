@@ -78,6 +78,8 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 | FR-15 | Successful payment triggers stock deduction, membership point accrual, and spending cycle update. |
 | FR-16 | Users can view their transaction history (paginated).                     |
 | FR-17 | Transaction stores a snapshot of the shipping address at time of order.   |
+| FR-17b| **Exception Flow (Payment Failure)**: If payment fails, the transaction is marked as `FAILED`. User is guided to an error page with a clear "Retry Payment" Call-To-Action. |
+| FR-17c| **Exception Flow (Refund)**: Admin initiates refund via Stripe Dashboard. System listens to `charge.refunded` webhook, updates transaction to `REFUNDED`. Admin manually manages inventory/points rollback if necessary. |
 
 ### 4.4 Coupon System
 
@@ -178,7 +180,7 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 | NFR-01 | **Security**: Firebase JWT authentication; role-based access control (`ROLE_ADMIN`). |
 | NFR-02 | **Security**: CORS configured to allow only the designated frontend URL. |
 | NFR-03 | **Security**: Public endpoints (`/public/**`, `/webhooks/**`) are unauthenticated; all others require JWT. |
-| NFR-04 | **Performance**: Redis caching for frequently accessed data.             |
+| NFR-04 | **Performance**: Redis caching for frequently accessed data. Homepage and product listing load time must be < 2 seconds (95th percentile). |
 | NFR-05 | **Data Integrity**: Reserved stock mechanism prevents overselling.       |
 | NFR-06 | **Scalability**: Paginated responses for products, transactions, and user lists. |
 | NFR-07 | **Reliability**: Scheduled reconciliation of stale transactions against Stripe. |
@@ -243,3 +245,18 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 | **Grace Period**      | Days a user retains their tier after a spending cycle ends.         |
 | **Showcase Collection** | Admin-curated product group displayed on the homepage.           |
 | **Navigation Item**   | CMS-managed menu entry for the site navbar.                        |
+
+---
+
+## 8. Data Dictionary (Key Financial Fields)
+
+To ensure financial accuracy and data integrity across the platform, the following data types and precision rules apply:
+
+| Entity / Field | Data Type | Precision / Rule | Description |
+|---|---|---|---|
+| `Product.price` | `DECIMAL(10,2)` | 2 decimal places | Standard product pricing. Max value `99,999,999.99`. |
+| `Transaction.total` | `DECIMAL(10,2)` | 2 decimal places | Final order total accurately calculated and passed to Stripe. |
+| `User.accumulatedSpending` | `DECIMAL(10,2)` | 2 decimal places | Tracked spending for membership tier evaluation. |
+| `User.points` | `DECIMAL(10,2)` | 2 decimal places | Loyalty points balance. Rounding strategy: Standard round to 2 decimal places during accrual/points-to-cash redemption. |
+| `Coupon.discountValue` | `DECIMAL(10,2)` | 2 decimal places | For fixed value discounts, represents local currency. For `%` discounts, represents percentage. |
+| `Promotion.discountValue` | `DECIMAL(10,2)` | 2 decimal places | Target discount amount for promotion rules. |
