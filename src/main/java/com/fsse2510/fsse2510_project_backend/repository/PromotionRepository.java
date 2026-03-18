@@ -17,10 +17,10 @@ public interface PromotionRepository extends JpaRepository<PromotionEntity, Inte
 
         // Removed duplicate findActivePromotions — use findActivePromotionsWithTargets instead
 
-        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
+        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE (p.startDate IS NULL OR p.startDate <= :now) AND (p.endDate IS NULL OR p.endDate > :now)")
         List<PromotionEntity> findActivePromotionsWithTargets(@Param("now") LocalDateTime now);
 
-        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.type IN :types AND p.startDate <= :now AND (p.endDate IS NULL OR p.endDate > :now)")
+        @Query("SELECT DISTINCT p FROM PromotionEntity p WHERE p.type IN :types AND (p.startDate IS NULL OR p.startDate <= :now) AND (p.endDate IS NULL OR p.endDate > :now)")
         List<PromotionEntity> findActiveByType(@Param("types") List<PromotionType> types,
                         @Param("now") LocalDateTime now);
 
