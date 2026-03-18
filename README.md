@@ -1,182 +1,56 @@
-# 🛒 FSSE2510 Project Backend - E-Commerce API
+# FSSE2510 Project E-Commerce Backend 🛍️
 
-> A Spring Boot backend API — supporting product management, shopping cart, Stripe payments, coupon engine, membership tiers, and RBAC access control.  
-> Deployed on AWS Lightsail with fully automated CI/CD via GitHub Actions + Google Jib.
+![Java Version](https://img.shields.io/badge/Java-21-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.8-brightgreen)
+![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)
+![Stripe](https://img.shields.io/badge/Stripe-v14-indigo)
+![Firebase](https://img.shields.io/badge/Firebase-Admin-yellow)
 
-🔴 **Live Demo:** [https://johnmak.store](https://johnmak.store)
+## 📖 Introduction
+This repository contains the backend REST API for the FSSE2510 E-Commerce course project. It is built to support the core functionalities of an online store, handling tasks such as managing products, users, shopping carts, and orders. The API integrates with Firebase Authentication for user login and Stripe for processing checkout payments.
 
----
+**🚀 Live Demo (Frontend):** [https://johnmak.store](https://johnmak.store)
 
-## ✨ Features
+### 🌟 Project Features
+*   **Core E-Commerce Flow**: Basic implementation of cart, checkout, and inventory updates.
+*   **Membership System**: A straightforward tiered system to explore points calculation and membership cycles.
+*   **Promotions & Discounts**: Practice implementing rule-based logic for applying coupons and promotions to carts.
+*   **Admin CMS Support**: API endpoints designed to help manage the homepage display and category navigation.
 
-| Feature | Description |
-|---------|-------------|
-| 📦 **Product Catalog** | Paginated browsing, category filtering, dynamic sorting |
-| 🛒 **Cart & Checkout** | Full cart lifecycle management with Stripe payment integration |
-| 🎫 **Coupon Engine** | Admin-managed discount strategies (percentage / fixed amount) |
-| ⭐ **Membership Tiers** | Bronze → Diamond tiered system with loyalty rewards |
-| ❤️ **Wishlist** | Users can save and track favorite products |
-| 🖼️ **Showcase Banners** | Admin-controlled homepage banners for marketing campaigns |
-| 🔐 **RBAC Security** | Firebase Auth JWT + role segregation (Public / User / Admin) |
+## 📚 Official Documentation
 
----
+The system is fully documented in the `docs` directory. Click the links below to view the documentation directly on GitHub:
 
-## 🛠️ Tech Stack
+### Architecture & Requirements
+1. [Business Requirements Document (BRD)](./docs/01-BRD.md)
+2. [Functional Specification Document (FSD)](./docs/02-FSD.md)
+3. [System Architecture](./docs/08-Architecture.md)
+4. [Database Schema & ER Diagram](./docs/07-Database-Schema.md)
 
-| Layer | Technology | Version / Notes |
-|-------|-----------|-----------------|
-| **Language** | Java | 21 |
-| **Framework** | Spring Boot | 3.5.8 |
-| **Data** | Spring Data JPA (Hibernate) | MySQL 8+ |
-| **Cache** | Spring Data Redis | Read-heavy operation optimization |
-| **Security** | Spring Security + OAuth2 Resource Server | Firebase JWT validation |
-| **DTO Mapping** | MapStruct | Prevents Entity exposure |
-| **Payments** | Stripe Java SDK | v24.1.0 + Webhooks |
-| **Storage** | AWS S3 | Product image media storage |
-| **DevOps** | Docker, Google Jib, GitHub Actions | AWS Lightsail |
+### Interactions & Interfaces
+5. [Use Cases](./docs/03-UseCases.md)
+6. [API Specification](./docs/04-API-Spec.md)
 
----
+### Quality Assurance (QA)
+7. [Test Cases](./docs/05-TestCases.md)
+8. [Definition of Done (DoD)](./docs/06-DoD.md)
 
-## 🚀 Quick Start
+## 🛠️ Tech Stack & Architecture
 
-### 1. Setup
+### Core Frameworks
+*   **Language**: Java 21 (Records, Virtual Threads)
+*   **Framework**: Spring Boot 3.5.8
+*   **Build Tool**: Maven / Gradle
 
-```bash
-cp .env.example .env
-```
+### Data & Persistence
+*   **Relational Database**: MySQL 8.0 (Hibernate / Spring Data JPA)
+*   **Caching & Session**: Redis (for caching heavy queries and temporary state)
+*   **DTO Mapping**: MapStruct
 
-Ensure MySQL and Redis are running.
-
-### 2. Start Development Server
-
-```bash
-./gradlew bootRun
-```
-
-Server runs on `http://localhost:8080` by default.
-
-### 3. Environment Variables
-
-| Category | Variables | Description |
-|----------|-----------|-------------|
-| **Database** | `DB_URL`, `DB_USER`, `DB_PASSWORD` | MySQL connection credentials |
-| **Cache** | `REDIS_HOST`, `REDIS_PORT`, `REDIS_PASSWORD` | Redis connection details |
-| **Security** | `JWT_ISSUER_URI` | Firebase Auth URI |
-| **AWS S3** | `AWS_S3_BUCKET`, `AWS_S3_REGION`, `AWS_ACCESS_KEY`, `AWS_SECRET_KEY`, `IMAGE_BASE_URL` | Image uploads |
-| **Stripe** | `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` | Payment processing |
-| **App** | `ADMIN_EMAILS`, `APP_FRONTEND_URL` | Admin seeding, CORS |
+### Security & Integrations
+*   **Authentication/Authorization**: Firebase Admin SDK (JWT Bearer Token verification)
+*   **Payment Gateway**: Stripe API (Processing and Webhooks)
+*   **API Documentation**: Swagger / Springdoc OpenAPI 3
 
 ---
-
-## 🏗️ Architecture
-
-```mermaid
-graph TD;
-    Client[Client Browser / Mobile] -->|HTTPS Request| Sec[Spring Security Filter Chain];
-    Sec -.->|JWT Validation| Ctrl[REST Controller];
-    Ctrl -->|DTO Handling| Service[Business Service Layer];
-    Service -->|Entities| Repo[JPA Repository / DAO];
-    Repo <--> DB[(MySQL 8.0)];
-    Service <--> Cache[(Redis Cache)];
-    Service <--> API[External APIs: Stripe / AWS S3];
-    
-    classDef auth fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef core fill:#bbf,stroke:#333,stroke-width:2px;
-    class Sec auth;
-    class Ctrl,Service,Repo core;
-```
-
-### Technical Highlights
-
-- **Two-Step Fetch Pattern** — Fetches `Slice<Integer>` IDs first, then shallow fetch, eliminating N+1 problem
-- **Defensive DTO Boundary** — MapStruct strict mapping; Entity objects never exposed to Presentation layer
-- **Global Exception Handler** — `@ControllerAdvice` intercepts all exceptions, returning standardized API error responses
-
----
-
-## 📚 Project Documentation
-
-All documentation is available in the [`docs/`](./docs) directory, viewable directly on GitHub:
-
-### 📐 Requirements & Design
-
-| Document | Description |
-|----------|-------------|
-| [📄 FUNCTIONAL_REQUIREMENTS.md](./docs/FUNCTIONAL_REQUIREMENTS.md) | Functional Requirements — User Stories + Gherkin acceptance criteria |
-| [📄 NON_FUNCTIONAL_REQUIREMENTS.md](./docs/NON_FUNCTIONAL_REQUIREMENTS.md) | Non-Functional Requirements — Performance, security, scalability standards |
-| [📄 USE_CASES.md](./docs/USE_CASES.md) | Use Cases — Actor-based UML use case diagrams |
-| [📄 DEFINITION_OF_DONE.md](./docs/DEFINITION_OF_DONE.md) | Definition of Done — Quality gates and acceptance checklists |
-
-### 🏗️ Architecture & Data
-
-| Document | Description |
-|----------|-------------|
-| [📄 ARCHITECTURE.md](./docs/ARCHITECTURE.md) | System Architecture — Layered design, data flow, design patterns |
-| [📄 DATABASE_SCHEMA.md](./docs/DATABASE_SCHEMA.md) | Database Schema — ER diagram, table definitions, indexes, relationships |
-| [📄 SEQUENCE_DIAGRAMS.md](./docs/SEQUENCE_DIAGRAMS.md) | Sequence Diagrams — Mermaid diagrams for all critical business flows |
-
-### 🔌 API
-
-| Document | Description |
-|----------|-------------|
-| [📄 API_CONTRACT.md](./docs/API_CONTRACT.md) | API Contract — Full RESTful endpoint specification with request/response examples |
-
-### ⚙️ Deployment & Decisions
-
-| Document | Description |
-|----------|-------------|
-| [📄 DEPLOYMENT.md](./docs/DEPLOYMENT.md) | Deployment Guide — CI/CD pipeline, Docker, Jib, AWS Lightsail |
-| [📄 BUSINESS_DECISIONS.md](./docs/BUSINESS_DECISIONS.md) | Business Decisions — ADRs documenting key technical and business trade-offs |
-
-### 📊 Flowcharts & ER Diagrams
-
-| Diagram | Description |
-|---------|-------------|
-| [📊 ER Diagram](./docs/diagrams/ER_DIAGRAM.md) | Full entity-relationship diagram with 17 entities and all relationships |
-| [📊 Checkout & Transaction Flow](./docs/diagrams/CHECKOUT_TRANSACTION_FLOW.md) | End-to-end checkout: create → prepare → Stripe → finish + state machine |
-| [📊 Membership State Machine](./docs/diagrams/MEMBERSHIP_STATE_MACHINE.md) | Tier hierarchy, upgrade/downgrade/grace period evaluation logic |
-| [📊 Cart Promotion Enricher](./docs/diagrams/CART_PROMOTION_ENRICHER.md) | Promotion applicability pipeline + penny-rounding discount distribution |
-| [📊 Firebase User Sync](./docs/diagrams/FIREBASE_USER_SYNC.md) | Firebase auth → user auto-creation sequence + security filter chain |
-
----
-
-## 🌐 Deploy to AWS Lightsail
-
-1. Push to `main` branch
-2. **GitHub Actions** automatically builds a Docker image using **Google Jib**
-3. Pushes to DockerHub
-4. SSH triggers rolling restart on AWS Lightsail
-
-```yaml
-# docker-compose.yml
-version: '3.8'
-services:
-  backend:
-    image: docker.io/johnmak101/project-backend:latest
-    container_name: fsse-backend
-    ports:
-      - "8080:8080"
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - JAVA_TOOL_OPTIONS=-Xms512m -Xmx1g -XX:MaxMetaspaceSize=160m -Xss512k -XX:+UseG1GC
-    deploy:
-      resources:
-        limits:
-          memory: 1.5G
-```
-
----
-
-## ❓ Troubleshooting
-
-- **JWT Validation Fails (401)** — Verify `JWT_ISSUER_URI` matches format `https://securetoken.google.com/<project-id>`
-- **Stripe Webhook Signature Failed** — Ensure CLI webhook secret matches the endpoint secret in `.env`
-- **Redis Connection Refused** — Check if Redis Docker container is running (`docker ps`)
-
----
-
-Created by **John Mak** 🚀
-
-*Last updated: 2026-03-18*
+*Created for FSSE2510 E-Commerce Project Setup Phase.*
