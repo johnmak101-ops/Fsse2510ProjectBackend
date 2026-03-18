@@ -6,7 +6,7 @@
 |--------------------|-------------------------|
 | **Document Version** | 1.0                   |
 | **Project Name**     | FSSE2510 E-Commerce   |
-| **Technology Stack** | Spring Boot 3.5 / Java 21, Next.js / TypeScript |
+| **Technology Stack** | Spring Boot 3.5 / Java 21, Next.js 16.1.6 / TypeScript |
 | **Database**         | MySQL + Redis Cache   |
 | **Authentication**   | Firebase JWT + Spring Security |
 | **Payment Gateway**  | Stripe                |
@@ -52,9 +52,10 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 |-------|---------------------------------------------------------------------------|
 | FR-01 | Customers can browse all active products (paginated).                    |
 | FR-02 | Customers can view product details by ID or URL slug.                    |
-| FR-03 | Customers can search products by name, category, collection, tag, or price range. |
+| FR-03 | Customers can browse products using the navigation menu categories/collections (Text search by name is restricted to Admins). 
 | FR-04 | System recommends related products.                                       |
 | FR-05 | Admins can create, update (full & metadata), and soft-delete products.   |
+| FR-05b| Admins can search and filter the product catalog by name, category, or other attributes in the Dashboard. |
 | FR-06 | Each product has inventory variants (SKU, size, colour, stock, weight).  |
 | FR-07 | Products support multiple images, tags, categories, and collections.     |
 
@@ -102,11 +103,12 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 | ID    | Requirement                                                               |
 |-------|---------------------------------------------------------------------------|
 | FR-27 | Five membership tiers: `NO_MEMBERSHIP → BRONZE → SILVER → GOLD → DIAMOND`. |
-| FR-28 | Each tier is configurable: min spend threshold, point earn rate, grace period. |
+| FR-28 | Each tier is configurable: min spend threshold, point earn rate, validity, and grace period. |
 | FR-29 | Users accumulate spending within a cycle; tier upgrades/downgrades happen based on thresholds. |
-| FR-30 | Users earn redeemable points on successful purchases.                    |
+| FR-30 | Users earn redeemable points automatically on successful purchases (Formula: `Amount Spent * 10 * Point Rate`). |
+| FR-30b| Users can redeem points at checkout for a cash discount (Default: `10 Points = HK$1.00`). |
 | FR-31 | Membership tier info is publicly accessible.                             |
-| FR-32 | Admins can update membership tier configurations.                        |
+| FR-32 | Admins can update membership tier configurations and the global points redemption rate. |
 
 ### 4.7 User Management
 
@@ -188,7 +190,7 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 
 ```
 ┌─────────────┐     Firebase JWT     ┌─────────────────────┐
-│  Next.js UI  │ ──────────────────→ │  Spring Boot API     │
+│  Next.js 16.1.6 UI  │ ──────────────────→ │  Spring Boot API     │
 │  (Frontend)  │ ←────────────────── │  (Backend)           │
 └─────────────┘                      │                     │
                                      │  ┌───────────┐      │

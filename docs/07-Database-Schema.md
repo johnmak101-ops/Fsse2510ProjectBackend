@@ -75,6 +75,15 @@ Join table mapping products to a specific transaction, acting as an order line i
     *   `quantity` (INT) - Quantity purchased.
     *   `price_at_purchase` (DECIMAL, 10,2) - Snapshot of price when bought.
 
+### 2.6 `system_config`
+Stores global system configurations controlled by the Admin.
+*   **Primary Key**: `key_name` (VARCHAR)
+*   **Columns**:
+    *   `key_name` (VARCHAR, 50) - Configuration key (PK) (e.g., `POINT_REDEMPTION_RATE`).
+    *   `value` (VARCHAR, 255) - Configuration value.
+    *   `description` (VARCHAR, 255) - Description of the setting.
+    *   `updated_at` (TIMESTAMP) - Last update time.
+
 ## 3. Relationships
 
 *   **User (1) - to - Many (0..*) Cart Items**: A user can have multiple items in their cart.
@@ -124,6 +133,11 @@ erDiagram
         INT pid FK
         INT quantity
         DECIMAL price_at_purchase
+    }
+    SYSTEM_CONFIG {
+        VARCHAR key_name PK
+        VARCHAR value
+        VARCHAR description
     }
 ```
 

@@ -101,10 +101,18 @@ Redisson (Redis) is used to cache read-heavy endpoints:
   - Coupons and Promotions are mutually exclusive by default unless `canStackWithCoupon` is true.
 
 ### 4.5 Membership Lifecycle Module
-* **Cycle Tracking**: Every user has an active `SpendingCycle` (e.g., 12 months).
-* **Point Accrual**: Successful transactions yield points = (Total Paid * Tier Multiplier).
-* **Tier Evaluation**: After a successful payment, system evaluates cycle spending. If it crosses the next threshold, instant upgrade.
-* **Downgrades & Grace Period**: If a cycle expires and goals weren't met, the tier is not instantly revoked. A `Grace Period` (e.g. 30 days) is activated where the user keeps the old tier perks but spending counts towards the *new* cycle. If the new cycle doesn't meet the threshold by the end of the Grace Period, the tier drops.
+* **Default Tier Configurations** (Admin Configurable):
+  * **NO MEMBERSHIP**: Min. Spend: Free Entry | Point Rate: 0% | Validity: LIFETIME | Grace Period: N/A
+  * **BRONZE**: Min. Spend: HK$100 | Point Rate: 1% | Validity: LIFETIME | Retention: Permanent | Grace Period: N/A
+  * **SILVER**: Min. Spend: HK$150 | Point Rate: 3% | Validity: 1 YEAR | Retention: HK$150 Annual Spend | Grace Period: 90 Days
+  * **GOLD**: Min. Spend: HK$500 | Point Rate: 5% | Validity: 1 YEAR | Retention: HK$500 Annual Spend | Grace Period: 90 Days
+  * **DIAMOND**: Min. Spend: HK$20,000 | Point Rate: 7% | Validity: 1 YEAR | Retention: HK$20,000 Annual Spend | Grace Period: 90 Days
+
+* **Cycle Tracking**: Every user has an active `SpendingCycle` (12 months for Silver+).
+* **Point Accrual**: Successful transactions yield points automatically based on the tier rate. **Formula**: `HK$1 = 10 * Point Rate` (e.g., At Gold tier 5%, HK$100 spent = 1,000 * 5% = 50 Points).
+* **Points Redemption**: Points translate directly into cash savings at checkout. **Redemption Value**: `10 Points = HK$1.00`. The base point rate, min spending, and redemption rate are dynamic and controlled by the Admin. The discount cannot exceed the cart subtotal, preventing negative numbers. Shipping fees do not earn points and cannot be discounted by points.
+* **Tier Evaluation**: After a successful payment, system evaluates cycle spending based on the configured values. If it crosses the next threshold, instant upgrade.
+* **Downgrades & Grace Period**: If a cycle expires and goals aren't met, the tier is not instantly revoked. A `Grace Period` (e.g. 90 days) is activated where the user keeps the old tier perks but spending counts towards the *new* cycle. If the new cycle doesn't meet the threshold by the end of the Grace Period, the tier drops.
 
 ### 4.6 Navigation CMS Module
 * **Tree Generation**: The database stores flat records with `parentId`. The backend algorithm recursively constructs a nested JSON tree for the frontend `/public/nav` endpoint.

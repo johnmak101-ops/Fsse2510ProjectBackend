@@ -18,7 +18,7 @@ Exposes product listing and details for guest browsing.
 
 | Method | Endpoint | Description | Query Params / Body |
 |--------|----------|-------------|---------------------|
-| `GET` | `/public/product` | Search/filter products (paginated) | `page, keywords, minPrice, maxPrice, priceSort, dateSort, category, collection, tag` |
+| `GET` | `/public/product` | Filter/browse products (paginated) | `page, minPrice, maxPrice, priceSort, dateSort, category, collection, tag` |
 | `GET` | `/public/product/{idOrSlug}` | Get single product detail + active promotions | - |
 | `GET` | `/public/product/categories` | List all predefined categories | - |
 | `GET` | `/public/product/collections`| List all predefined collections| - |
