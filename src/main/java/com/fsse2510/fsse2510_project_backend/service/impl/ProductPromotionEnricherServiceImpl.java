@@ -4,7 +4,7 @@ import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductSummaryData;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.PromotionEnrichable;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
-import com.fsse2510.fsse2510_project_backend.data.promotion.entity.PromotionEntity;
+import com.fsse2510.fsse2510_project_backend.data.promotion.cache.CachedPromotion;
 import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.PromotionType;
 import com.fsse2510.fsse2510_project_backend.repository.ProductRepository;
 import com.fsse2510.fsse2510_project_backend.repository.PromotionRepository;
@@ -49,6 +49,8 @@ import static com.fsse2510.fsse2510_project_backend.util.BusinessConstants.MONEY
  * reads of the promotions
  * index, and synchronizes only when the cache has expired and needs refreshing
  * from the database.
+ * 4. Cache POJO: Uses CachedPromotion (JPA-free record) instead of
+ * PromotionEntity to avoid LazyInitializationException on detached entities.
  */
 @Service
 @RequiredArgsConstructor
@@ -76,25 +78,17 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
 
     /*
      * Inner class acting as an in-memory database index for Active Promotions.
-     *
-     * Imagine you have 100 products on a page, and every product needs to check if
-     * it has a discount.
-     * If you ask the database 100 times, it's very slow (like walking to the store
-     * 100 times).
-     * Instead, we grab ALL the active discounts once, put them into sorting bins
-     * (HashMaps) by
-     * product ID, category, or tag. Then, checking a product's discount is instant
-     * - just looking in the bin!
+     * Now uses CachedPromotion (JPA-free POJO) instead of PromotionEntity.
      */
     private static class PromotionIndex {
-        final List<PromotionEntity> allPromos;
-        final List<PromotionEntity> storewidePromos;
-        final Map<Integer, List<PromotionEntity>> pidToPromos;
-        final Map<String, List<PromotionEntity>> categoryToPromos;
-        final Map<String, List<PromotionEntity>> collectionToPromos;
-        final Map<String, List<PromotionEntity>> tagToPromos;
+        final List<CachedPromotion> allPromos;
+        final List<CachedPromotion> storewidePromos;
+        final Map<Integer, List<CachedPromotion>> pidToPromos;
+        final Map<String, List<CachedPromotion>> categoryToPromos;
+        final Map<String, List<CachedPromotion>> collectionToPromos;
+        final Map<String, List<CachedPromotion>> tagToPromos;
 
-        PromotionIndex(List<PromotionEntity> promos) {
+        PromotionIndex(List<CachedPromotion> promos) {
             this.allPromos = promos;
             this.storewidePromos = new ArrayList<>();
             this.pidToPromos = new HashMap<>();
@@ -102,30 +96,30 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
             this.collectionToPromos = new HashMap<>();
             this.tagToPromos = new HashMap<>();
 
-            List<PromotionEntity> sortedPromos = new ArrayList<>(promos);
+            List<CachedPromotion> sortedPromos = new ArrayList<>(promos);
             sortedPromos.sort((p1, p2) -> {
-                BigDecimal v1 = p1.getDiscountValue() != null ? p1.getDiscountValue() : BigDecimal.ZERO;
-                BigDecimal v2 = p2.getDiscountValue() != null ? p2.getDiscountValue() : BigDecimal.ZERO;
+                BigDecimal v1 = p1.discountValue() != null ? p1.discountValue() : BigDecimal.ZERO;
+                BigDecimal v2 = p2.discountValue() != null ? p2.discountValue() : BigDecimal.ZERO;
                 return v2.compareTo(v1);
             });
 
-            for (PromotionEntity p : sortedPromos) {
-                if (p.getType() == PromotionType.STOREWIDE_SALE || p.getType() == PromotionType.MEMBERSHIP_DISCOUNT) {
+            for (CachedPromotion p : sortedPromos) {
+                if (p.type() == PromotionType.STOREWIDE_SALE || p.type() == PromotionType.MEMBERSHIP_DISCOUNT) {
                     storewidePromos.add(p);
                 }
-                if (!p.getTargetPids().isEmpty()) {
-                    p.getTargetPids().forEach(pid -> pidToPromos.computeIfAbsent(pid, k -> new ArrayList<>()).add(p));
+                if (!p.targetPids().isEmpty()) {
+                    p.targetPids().forEach(pid -> pidToPromos.computeIfAbsent(pid, k -> new ArrayList<>()).add(p));
                 }
-                if (!p.getTargetCategories().isEmpty()) {
-                    p.getTargetCategories().forEach(cat -> categoryToPromos
+                if (!p.targetCategories().isEmpty()) {
+                    p.targetCategories().forEach(cat -> categoryToPromos
                             .computeIfAbsent(cat.trim().toLowerCase(), k -> new ArrayList<>()).add(p));
                 }
-                if (!p.getTargetCollections().isEmpty()) {
-                    p.getTargetCollections().forEach(col -> collectionToPromos
+                if (!p.targetCollections().isEmpty()) {
+                    p.targetCollections().forEach(col -> collectionToPromos
                             .computeIfAbsent(col.trim().toLowerCase(), k -> new ArrayList<>()).add(p));
                 }
-                if (!p.getTargetTags().isEmpty()) {
-                    p.getTargetTags().forEach(tag -> tagToPromos
+                if (!p.targetTags().isEmpty()) {
+                    p.targetTags().forEach(tag -> tagToPromos
                             .computeIfAbsent(tag.trim().toLowerCase(), k -> new ArrayList<>()).add(p));
                 }
             }
@@ -137,10 +131,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
     }
 
     // Public API
-    /*
-     * Enriches a list of ProductResponseData with the best applicable promotions.
-     * Automatically fetches necessary ProductEntity records from the database.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseData> enrichWithPromotions(List<ProductResponseData> products) {
@@ -151,10 +141,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return enrichWithPromotions(products, entities);
     }
 
-    /*
-     * Enriches a list of ProductResponseData with the best applicable promotions,
-     * using a pre-fetched list of ProductEntity records to optimize database hits.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<ProductResponseData> enrichWithPromotions(List<ProductResponseData> products,
@@ -162,10 +148,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return enrichList(products, entities, ProductResponseData::getPid);
     }
 
-    /*
-     * Enriches a list of ProductSummaryData with the best applicable promotions.
-     * Automatically fetches necessary ProductEntity records from the database.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<ProductSummaryData> enrichSummariesWithPromotions(List<ProductSummaryData> summaries) {
@@ -176,10 +158,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return enrichSummariesWithPromotions(summaries, entities);
     }
 
-    /*
-     * Enriches a list of ProductSummaryData with the best applicable promotions,
-     * using a pre-fetched list of ProductEntity records.
-     */
     @Override
     @Transactional(readOnly = true)
     public List<ProductSummaryData> enrichSummariesWithPromotions(List<ProductSummaryData> summaries,
@@ -187,10 +165,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return enrichList(summaries, entities, ProductSummaryData::getPid);
     }
 
-    /*
-     * Enriches a single ProductResponseData with the best applicable promotion.
-     * Fetches the corresponding ProductEntity from the database.
-     */
     @Override
     @Transactional(readOnly = true)
     public ProductResponseData enrichWithPromotions(ProductResponseData product) {
@@ -200,10 +174,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return enrichWithPromotions(product, entity);
     }
 
-    /*
-     * Enriches a single ProductResponseData with the best applicable promotion,
-     * using a pre-fetched ProductEntity.
-     */
     @Override
     @Transactional(readOnly = true)
     public ProductResponseData enrichWithPromotions(ProductResponseData product, ProductEntity entity) {
@@ -215,10 +185,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return applyBestPromotion(product, index, entity);
     }
 
-    /*
-     * Manually clears the active promotions index cache.
-     * Thread-safe operation to reset the volatile cache variables.
-     */
     @Override
     public void clearCache() {
         synchronized (this) {
@@ -230,14 +196,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
 
     // Generic Core Logic
 
-    /*
-     * Generic enrichment for any list of PromotionEnrichable DTOs.
-     *
-     * Our system has multiple DTOs that represent products (e.g., Summary, Detail).
-     * By having them all implement `PromotionEnrichable`, we can run the EXACT same
-     * discount calculation logic on all of them. No more copying and pasting the
-     * math code. If a bug is fixed here, it's fixed everywhere.
-     */
     private <T extends PromotionEnrichable> List<T> enrichList(List<T> dtos,
             List<ProductEntity> entities,
             Function<T, Integer> pidExtractor) {
@@ -257,11 +215,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                 .toList();
     }
 
-    /*
-     * Apply the best promotion to any PromotionEnrichable DTO.
-     * Replaces the duplicate applyBestPromotionWithEntity +
-     * applyBestPromotionToSummaryWithEntity pair.
-     */
     private <T extends PromotionEnrichable> T applyBestPromotion(T dto,
             PromotionIndex index,
             ProductEntity entity) {
@@ -271,7 +224,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         dto.setPromotionBadgeTexts(new ArrayList<>());
         dto.setIsSale(false);
 
-        Optional<PromotionEntity> best = findBestPromotion(entity, index);
+        Optional<CachedPromotion> best = findBestPromotion(entity, index);
 
         if (best.isEmpty()) {
             checkAndSetMembershipBadge(dto, index.allPromos, entity);
@@ -287,7 +240,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
 
         dto.setOriginalPrice(originalPrice);
 
-        if (PRICE_REDUCING_TYPES.contains(best.get().getType())) {
+        if (PRICE_REDUCING_TYPES.contains(best.get().type())) {
             dto.setPrice(promoPrice);
             dto.setDiscountAmount(discountAmount);
             dto.setDiscountPercentage(discountPercentage);
@@ -308,15 +261,11 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         return dto;
     }
 
-    /*
-     * Append membership teaser badge if applicable (does not overwrite existing
-     * badges).
-     */
     private <T extends PromotionEnrichable> void checkAndSetMembershipBadge(T dto,
-            List<PromotionEntity> activePromos,
+            List<CachedPromotion> activePromos,
             ProductEntity entity) {
         activePromos.stream()
-                .filter(p -> p.getType() == PromotionType.MEMBERSHIP_DISCOUNT
+                .filter(p -> p.type() == PromotionType.MEMBERSHIP_DISCOUNT
                         && promotionApplicabilityService.isProductEligibleForPromotion(p, entity))
                 .findFirst()
                 .ifPresent(p -> {
@@ -328,9 +277,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                 });
     }
 
-    /*
-     * Clear all promotion-related fields. Works for any PromotionEnrichable DTO.
-     */
     private <T extends PromotionEnrichable> T setNoDiscount(T dto) {
         dto.setOriginalPrice(dto.getPrice());
         dto.setDiscountAmount(BigDecimal.ZERO);
@@ -344,18 +290,6 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
 
     // Cache
 
-    /*
-     * Retrieves the cached active promotions index, or refreshes it from the DB if
-     * expired.
-     *
-     * Under heavy load, if the cache expires, 1000 users hitting the site might all
-     * trigger
-     * a slow database fetch at the exact same split second (called a Cache
-     * Stampede).
-     * The `synchronized(this)` block ensures only ONE thread fetches the data, and
-     * everyone
-     * else waits for that thread to finish and shares the updated data.
-     */
     private PromotionIndex getCachedPromotionIndex() {
         LocalDateTime now = LocalDateTime.now();
         if (promotionIndex != null && cacheExpiry != null && now.isBefore(cacheExpiry)) {
@@ -366,7 +300,11 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                 return promotionIndex;
             }
             logger.info("Refreshing active promotions index from DB");
-            List<PromotionEntity> activePromos = promotionRepository.findActivePromotionsWithTargets(now);
+            List<CachedPromotion> activePromos = promotionRepository
+                    .findActivePromotionsWithTargets(now)
+                    .stream()
+                    .map(CachedPromotion::from)
+                    .toList();
             promotionIndex = new PromotionIndex(activePromos);
             cacheExpiry = now.plusMinutes(1);
             return promotionIndex;
@@ -375,24 +313,13 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
 
     // Promotion Selection
 
-    /*
-     * Determines the single best promotion for a product out of all applicable
-     * candidates.
-     *
-     * We grab only the promotions from the 'bins' (HashMaps) that directly match
-     * this product's
-     * attributes. Then we calculate the actual $ discount amount for each
-     * candidate, and finally pick the MAX discount. This guarantees the customer
-     * always gets the cheapest
-     * possible price.
-     */
-    private Optional<PromotionEntity> findBestPromotion(ProductEntity product, PromotionIndex index) {
-        Set<PromotionEntity> candidates = new HashSet<>(index.storewidePromos);
+    private Optional<CachedPromotion> findBestPromotion(ProductEntity product, PromotionIndex index) {
+        Set<CachedPromotion> candidates = new HashSet<>(index.storewidePromos);
 
         candidates.addAll(index.pidToPromos.getOrDefault(product.getPid(), List.of()));
 
         if (product.getCategory() != null) {
-            List<PromotionEntity> categoryPromos = index.categoryToPromos
+            List<CachedPromotion> categoryPromos = index.categoryToPromos
                     .get(product.getCategory().getName().trim().toLowerCase());
             if (categoryPromos != null) {
                 candidates.addAll(categoryPromos);
@@ -400,7 +327,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
         }
 
         if (product.getCollection() != null) {
-            List<PromotionEntity> collectionPromos = index.collectionToPromos
+            List<CachedPromotion> collectionPromos = index.collectionToPromos
                     .get(product.getCollection().getName().trim().toLowerCase());
             if (collectionPromos != null) {
                 candidates.addAll(collectionPromos);
@@ -412,12 +339,12 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                     tag -> candidates.addAll(index.tagToPromos.getOrDefault(tag.trim().toLowerCase(), List.of())));
         }
 
-        BigDecimal originalPrice = product.getPrice(); // Define originalPrice here for use in comparator
+        BigDecimal originalPrice = product.getPrice();
         return candidates.stream()
                 .filter(p -> promotionApplicabilityService.isApplicable(p, product, false))
                 .max(Comparator
-                        .comparing((PromotionEntity p) -> promotionCalculator.calculateDiscountAmount(p,
+                        .comparing((CachedPromotion p) -> promotionCalculator.calculateDiscountAmount(p,
                                 originalPrice, null))
-                        .thenComparing(p -> p.getType() == PromotionType.MEMBERSHIP_DISCOUNT ? 1 : 0));
+                        .thenComparing(p -> p.type() == PromotionType.MEMBERSHIP_DISCOUNT ? 1 : 0));
     }
 }

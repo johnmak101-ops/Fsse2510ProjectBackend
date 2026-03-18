@@ -1,7 +1,9 @@
 package com.fsse2510.fsse2510_project_backend.service.impl;
 
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
+import com.fsse2510.fsse2510_project_backend.data.promotion.cache.CachedPromotion;
 import com.fsse2510.fsse2510_project_backend.data.promotion.entity.PromotionEntity;
+import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.PromotionType;
 import com.fsse2510.fsse2510_project_backend.service.PromotionApplicabilityService;
 import com.fsse2510.fsse2510_project_backend.data.membership.membershipLevel.MembershipLevel;
 import com.fsse2510.fsse2510_project_backend.data.user.entity.UserEntity;
@@ -10,11 +12,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Service
 public class PromotionApplicabilityServiceImpl implements PromotionApplicabilityService {
 
     private static final Logger logger = LoggerFactory.getLogger(PromotionApplicabilityServiceImpl.class);
+
+    // ========== PromotionEntity overloads ==========
 
     @Override
     public boolean isApplicable(PromotionEntity promo, ProductEntity product, boolean isStrict) {
@@ -25,75 +30,131 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
     public boolean isApplicable(PromotionEntity promo, ProductEntity product, UserEntity user, boolean isStrict) {
         if (promo == null || product == null)
             return false;
-
-        LocalDateTime now = LocalDateTime.now();
-        if (promo.getStartDate().isAfter(now) || (promo.getEndDate() != null && promo.getEndDate().isBefore(now))) {
-            return false;
-        }
-
-        if (promo.getTargetMemberLevel() != null) {
-            if (isStrict) {
-                // Strict Mode: Actual Transaction Enforcement
-                if (user == null || !isUserLevelQualified(promo.getTargetMemberLevel(), user.getLevel())) {
-                    logger.debug("Promotion {} strictly requires level {}, user qualification failed",
-                            promo.getId(), promo.getTargetMemberLevel());
-                    return false;
-                }
-            } else {
-                // Teaser Mode: Display for everyone
-                if (user == null) {
-                    logger.debug("Promotion {} has target level {}, allowing for guest (teaser mode)",
-                            promo.getId(), promo.getTargetMemberLevel());
-                } else if (!isUserLevelQualified(promo.getTargetMemberLevel(), user.getLevel())) {
-                    logger.debug(
-                            "Promotion {} has target level {}, user level is {}, allowing (showing teaser benefits)",
-                            promo.getId(), promo.getTargetMemberLevel(), user.getLevel());
-                }
-                // Continue to check product targeting (Step 3)
-            }
-        }
-
-        return isProductEligibleForPromotion(promo, product);
+        return isApplicableInternal(
+                promo.getId(), promo.getType(), promo.getStartDate(), promo.getEndDate(),
+                promo.getTargetMemberLevel(),
+                promo.getTargetPids(), promo.getTargetCategories(),
+                promo.getTargetCollections(), promo.getTargetTags(),
+                product, user, isStrict);
     }
 
     @Override
     public boolean isProductEligibleForPromotion(PromotionEntity promo, ProductEntity product) {
         if (promo == null || product == null)
             return false;
+        return isProductEligibleInternal(
+                promo.getType(),
+                promo.getTargetPids(), promo.getTargetCategories(),
+                promo.getTargetCollections(), promo.getTargetTags(),
+                product);
+    }
 
-        switch (promo.getType()) {
+    // ========== CachedPromotion overloads ==========
+
+    @Override
+    public boolean isApplicable(CachedPromotion promo, ProductEntity product, boolean isStrict) {
+        return isApplicable(promo, product, null, isStrict);
+    }
+
+    @Override
+    public boolean isApplicable(CachedPromotion promo, ProductEntity product, UserEntity user, boolean isStrict) {
+        if (promo == null || product == null)
+            return false;
+        return isApplicableInternal(
+                promo.id(), promo.type(), promo.startDate(), promo.endDate(),
+                promo.targetMemberLevel(),
+                promo.targetPids(), promo.targetCategories(),
+                promo.targetCollections(), promo.targetTags(),
+                product, user, isStrict);
+    }
+
+    @Override
+    public boolean isProductEligibleForPromotion(CachedPromotion promo, ProductEntity product) {
+        if (promo == null || product == null)
+            return false;
+        return isProductEligibleInternal(
+                promo.type(),
+                promo.targetPids(), promo.targetCategories(),
+                promo.targetCollections(), promo.targetTags(),
+                product);
+    }
+
+    // ========== Shared implementation ==========
+
+    private boolean isApplicableInternal(
+            Integer promoId, PromotionType type,
+            LocalDateTime startDate, LocalDateTime endDate,
+            MembershipLevel targetMemberLevel,
+            Set<Integer> targetPids, Set<String> targetCategories,
+            Set<String> targetCollections, Set<String> targetTags,
+            ProductEntity product, UserEntity user, boolean isStrict) {
+
+        LocalDateTime now = LocalDateTime.now();
+        if (startDate.isAfter(now) || (endDate != null && endDate.isBefore(now))) {
+            return false;
+        }
+
+        if (targetMemberLevel != null) {
+            if (isStrict) {
+                if (user == null || !isUserLevelQualified(targetMemberLevel, user.getLevel())) {
+                    logger.debug("Promotion {} strictly requires level {}, user qualification failed",
+                            promoId, targetMemberLevel);
+                    return false;
+                }
+            } else {
+                if (user == null) {
+                    logger.debug("Promotion {} has target level {}, allowing for guest (teaser mode)",
+                            promoId, targetMemberLevel);
+                } else if (!isUserLevelQualified(targetMemberLevel, user.getLevel())) {
+                    logger.debug(
+                            "Promotion {} has target level {}, user level is {}, allowing (showing teaser benefits)",
+                            promoId, targetMemberLevel, user.getLevel());
+                }
+            }
+        }
+
+        return isProductEligibleInternal(type, targetPids, targetCategories, targetCollections, targetTags, product);
+    }
+
+    private boolean isProductEligibleInternal(
+            PromotionType type,
+            Set<Integer> targetPids, Set<String> targetCategories,
+            Set<String> targetCollections, Set<String> targetTags,
+            ProductEntity product) {
+
+        switch (type) {
             case STOREWIDE_SALE:
                 return true;
 
             case SPECIFIC_PRODUCT_DISCOUNT:
-                return matchesPid(promo, product);
+                return matchesPid(targetPids, product);
 
             case SPECIFIC_CATEGORY_DISCOUNT:
-                return matchesCategory(promo, product);
+                return matchesCategory(targetCategories, product);
 
             case SPECIFIC_COLLECTION_DISCOUNT:
-                return matchesCollection(promo, product);
+                return matchesCollection(targetCollections, product);
 
             case SPECIFIC_TAG_DISCOUNT:
-                return matchesTag(promo, product);
+                return matchesTag(targetTags, product);
 
             case MEMBERSHIP_DISCOUNT:
             case BUY_X_GET_Y_FREE:
             case BUNDLE_DISCOUNT:
             case MIN_QUANTITY_DISCOUNT:
             case MIN_AMOUNT_DISCOUNT: {
-                boolean hasTargets = !promo.getTargetPids().isEmpty()
-                        || !promo.getTargetCategories().isEmpty()
-                        || !promo.getTargetCollections().isEmpty()
-                        || !promo.getTargetTags().isEmpty();
+                boolean hasTargets = !targetPids.isEmpty()
+                        || !targetCategories.isEmpty()
+                        || !targetCollections.isEmpty()
+                        || !targetTags.isEmpty();
 
                 if (!hasTargets)
                     return true;
 
-                return matchesPid(promo, product)
-                        || matchesCategory(promo, product)
-                        || matchesCollection(promo, product)
-                        || matchesTag(promo, product);
+                return matchesPid(targetPids, product)
+                        || matchesCategory(targetCategories, product)
+                        || matchesCollection(targetCollections, product)
+                        || matchesTag(targetTags, product);
             }
 
             default:
@@ -101,35 +162,35 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
         }
     }
 
-    private boolean matchesPid(PromotionEntity promo, ProductEntity product) {
-        if (promo.getTargetPids().isEmpty())
+    private boolean matchesPid(Set<Integer> targetPids, ProductEntity product) {
+        if (targetPids.isEmpty())
             return false;
-        return promo.getTargetPids().contains(product.getPid());
+        return targetPids.contains(product.getPid());
     }
 
-    private boolean matchesCategory(PromotionEntity promo, ProductEntity product) {
-        if (promo.getTargetCategories().isEmpty() || product.getCategory() == null)
+    private boolean matchesCategory(Set<String> targetCategories, ProductEntity product) {
+        if (targetCategories.isEmpty() || product.getCategory() == null)
             return false;
         String productCategory = product.getCategory().getName().trim();
-        return promo.getTargetCategories().stream()
+        return targetCategories.stream()
                 .anyMatch(target -> target.trim().equalsIgnoreCase(productCategory));
     }
 
-    private boolean matchesCollection(PromotionEntity promo, ProductEntity product) {
-        if (promo.getTargetCollections().isEmpty() || product.getCollection() == null)
+    private boolean matchesCollection(Set<String> targetCollections, ProductEntity product) {
+        if (targetCollections.isEmpty() || product.getCollection() == null)
             return false;
         String productCollection = product.getCollection().getName().trim();
-        return promo.getTargetCollections().stream()
+        return targetCollections.stream()
                 .anyMatch(target -> target.trim().equalsIgnoreCase(productCollection));
     }
 
-    private boolean matchesTag(PromotionEntity promo, ProductEntity product) {
-        if (promo.getTargetTags().isEmpty() || product.getTags().isEmpty())
+    private boolean matchesTag(Set<String> targetTags, ProductEntity product) {
+        if (targetTags.isEmpty() || product.getTags().isEmpty())
             return false;
 
         return product.getTags().stream()
                 .map(String::trim)
-                .anyMatch(pTag -> promo.getTargetTags().stream()
+                .anyMatch(pTag -> targetTags.stream()
                         .map(String::trim)
                         .anyMatch(tTag -> tTag.equalsIgnoreCase(pTag)));
     }
