@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 
 @Service
 public class PromotionApplicabilityServiceImpl implements PromotionApplicabilityService {
@@ -83,10 +82,10 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
             case BUNDLE_DISCOUNT:
             case MIN_QUANTITY_DISCOUNT:
             case MIN_AMOUNT_DISCOUNT: {
-                boolean hasTargets = !isEmpty(promo.getTargetPids())
-                        || !isEmpty(promo.getTargetCategories())
-                        || !isEmpty(promo.getTargetCollections())
-                        || !isEmpty(promo.getTargetTags());
+                boolean hasTargets = !promo.getTargetPids().isEmpty()
+                        || !promo.getTargetCategories().isEmpty()
+                        || !promo.getTargetCollections().isEmpty()
+                        || !promo.getTargetTags().isEmpty();
 
                 if (!hasTargets)
                     return true;
@@ -103,13 +102,13 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
     }
 
     private boolean matchesPid(PromotionEntity promo, ProductEntity product) {
-        if (isEmpty(promo.getTargetPids()))
+        if (promo.getTargetPids().isEmpty())
             return false;
         return promo.getTargetPids().contains(product.getPid());
     }
 
     private boolean matchesCategory(PromotionEntity promo, ProductEntity product) {
-        if (isEmpty(promo.getTargetCategories()) || product.getCategory() == null)
+        if (promo.getTargetCategories().isEmpty() || product.getCategory() == null)
             return false;
         String productCategory = product.getCategory().getName().trim();
         return promo.getTargetCategories().stream()
@@ -117,7 +116,7 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
     }
 
     private boolean matchesCollection(PromotionEntity promo, ProductEntity product) {
-        if (isEmpty(promo.getTargetCollections()) || product.getCollection() == null)
+        if (promo.getTargetCollections().isEmpty() || product.getCollection() == null)
             return false;
         String productCollection = product.getCollection().getName().trim();
         return promo.getTargetCollections().stream()
@@ -125,7 +124,7 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
     }
 
     private boolean matchesTag(PromotionEntity promo, ProductEntity product) {
-        if (isEmpty(promo.getTargetTags()) || product.getTags() == null || product.getTags().isEmpty())
+        if (promo.getTargetTags().isEmpty() || product.getTags().isEmpty())
             return false;
 
         return product.getTags().stream()
@@ -147,9 +146,5 @@ public class PromotionApplicabilityServiceImpl implements PromotionApplicability
         logger.debug("Level check: user={}, target={}, result={}",
                 userLevel, targetLevel, qualified);
         return qualified;
-    }
-
-    private boolean isEmpty(Set<?> set) {
-        return set == null || set.isEmpty();
     }
 }

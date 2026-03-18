@@ -113,18 +113,18 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
                 if (p.getType() == PromotionType.STOREWIDE_SALE || p.getType() == PromotionType.MEMBERSHIP_DISCOUNT) {
                     storewidePromos.add(p);
                 }
-                if (p.getTargetPids() != null) {
+                if (!p.getTargetPids().isEmpty()) {
                     p.getTargetPids().forEach(pid -> pidToPromos.computeIfAbsent(pid, k -> new ArrayList<>()).add(p));
                 }
-                if (p.getTargetCategories() != null) {
+                if (!p.getTargetCategories().isEmpty()) {
                     p.getTargetCategories().forEach(cat -> categoryToPromos
                             .computeIfAbsent(cat.trim().toLowerCase(), k -> new ArrayList<>()).add(p));
                 }
-                if (p.getTargetCollections() != null) {
+                if (!p.getTargetCollections().isEmpty()) {
                     p.getTargetCollections().forEach(col -> collectionToPromos
                             .computeIfAbsent(col.trim().toLowerCase(), k -> new ArrayList<>()).add(p));
                 }
-                if (p.getTargetTags() != null) {
+                if (!p.getTargetTags().isEmpty()) {
                     p.getTargetTags().forEach(tag -> tagToPromos
                             .computeIfAbsent(tag.trim().toLowerCase(), k -> new ArrayList<>()).add(p));
                 }
@@ -407,7 +407,7 @@ public class ProductPromotionEnricherServiceImpl implements ProductPromotionEnri
             }
         }
 
-        if (product.getTags() != null) {
+        if (!product.getTags().isEmpty()) {
             product.getTags().forEach(
                     tag -> candidates.addAll(index.tagToPromos.getOrDefault(tag.trim().toLowerCase(), List.of())));
         }

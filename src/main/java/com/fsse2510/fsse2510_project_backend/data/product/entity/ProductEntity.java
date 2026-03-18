@@ -140,8 +140,6 @@ public class ProductEntity {
 
         @Transient
         public Integer getTotalStock() {
-                if (inventories == null)
-                        return 0;
                 return inventories.stream()
                                 .mapToInt(ProductInventoryEntity::getStock)
                                 .sum();
