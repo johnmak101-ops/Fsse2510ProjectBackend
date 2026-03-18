@@ -49,6 +49,19 @@ Stores product catalog information and metadata.
     *   `isNew` (BOOLEAN) - New arrival indicator.
     *   `isSale` (BOOLEAN) - Sale item indicator.
 
+### 2.2b `product_inventory`
+Stores the variations (SKUs) and stock quantities for products.
+*   **Primary Key**: `id` (INT)
+*   **Columns**:
+    *   `id` (INT, AUTO_INCREMENT) - Inventory record ID (PK).
+    *   `pid` (INT) - FK to `products`.
+    *   `sku` (VARCHAR, 255) - Unique stock keeping unit (UNIQUE, NOT NULL).
+    *   `size` (VARCHAR, 255) - Size variation.
+    *   `color` (VARCHAR, 255) - Color variation.
+    *   `stock` (INT) - Actual available physical inventory (NOT NULL).
+    *   `stock_reserved` (INT) - *Currently for future use (reserved stock is evaluated dynamically via pending transactions)*.
+    *   `weight` (DECIMAL, 10,2) - Physical weight for shipping.
+
 ### 2.3 `product_images`
 Stores additional gallery images for products.
 *   **Primary Key**: `id` (INT)
@@ -216,6 +229,7 @@ erDiagram
     PRODUCTS ||--o{ TRANSACTION_PRODUCTS : "part of"
     PRODUCTS ||--o{ WISHLISTS : "liked in"
     PRODUCTS ||--o{ PRODUCT_IMAGES : "has"
+    PRODUCTS ||--o{ PRODUCT_INVENTORY : "has variant"
     PRODUCTS ||--o{ PRODUCT_TAGS : "has"
     TRANSACTIONS ||--|{ TRANSACTION_PRODUCTS : "contains"
     CATEGORIES ||--o{ PRODUCTS : "contains"
@@ -250,6 +264,16 @@ erDiagram
         INT promotion_id FK
         BOOLEAN isNew
         BOOLEAN isSale
+    }
+    PRODUCT_INVENTORY {
+        INT id PK
+        INT pid FK
+        VARCHAR sku
+        VARCHAR size
+        VARCHAR color
+        INT stock
+        INT stock_reserved
+        DECIMAL weight
     }
     CART_ITEMS {
         INT cid PK

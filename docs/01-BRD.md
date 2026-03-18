@@ -66,7 +66,7 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 | FR-08 | Authenticated users can add items to their cart by SKU.                   |
 | FR-09 | Users can update item quantity or remove items from the cart.             |
 | FR-10 | Cart displays real-time pricing and subtotals.                            |
-| FR-11 | Stock is validated before adding to cart (reserved stock management).     |
+| FR-11 | Stock is validated before adding to cart (reserved stock management). *Note: Reserved stock is dynamically calculated based on recent pending/processing transactions. The `stock_reserved` database field is for future use.* |
 
 ### 4.3 Checkout & Transactions
 
@@ -240,7 +240,7 @@ FSSE2510 is a full-stack e-commerce platform that provides a complete online sho
 | **SKU**               | Stock Keeping Unit — unique identifier for a product variant.       |
 | **Payment Intent**    | Stripe object representing a customer's intent to pay.              |
 | **Webhook**           | HTTP callback from Stripe notifying payment status changes.         |
-| **Reserved Stock**    | Inventory temporarily held during checkout to prevent overselling.  |
+| **Reserved Stock**    | Inventory temporarily held during checkout to prevent overselling. *Calculated dynamically: Virtual Stock = Actual Stock - Pending/Processing Quantities. The `stock_reserved` DB field is for future use.* |
 | **Spending Cycle**    | Period during which a user's total spending determines their membership tier. |
 | **Grace Period**      | Days a user retains their tier after a spending cycle ends.         |
 | **Showcase Collection** | Admin-curated product group displayed on the homepage.           |
