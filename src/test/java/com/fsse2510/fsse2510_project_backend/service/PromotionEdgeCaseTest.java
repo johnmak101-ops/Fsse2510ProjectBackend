@@ -4,11 +4,11 @@ import com.fsse2510.fsse2510_project_backend.data.product.entity.CategoryEntity;
 import com.fsse2510.fsse2510_project_backend.data.product.domainObject.response.ProductResponseData;
 import com.fsse2510.fsse2510_project_backend.data.product.entity.ProductEntity;
 import com.fsse2510.fsse2510_project_backend.data.common.constant.DiscountType;
+import com.fsse2510.fsse2510_project_backend.data.promotion.cache.CachedPromotion;
 import com.fsse2510.fsse2510_project_backend.data.promotion.entity.PromotionEntity;
 import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.PromotionType;
 import com.fsse2510.fsse2510_project_backend.repository.ProductRepository;
 import com.fsse2510.fsse2510_project_backend.repository.PromotionRepository;
-import com.fsse2510.fsse2510_project_backend.data.promotion.promotionType.PromotionType;
 import com.fsse2510.fsse2510_project_backend.service.impl.ProductPromotionEnricherServiceImpl;
 import com.fsse2510.fsse2510_project_backend.service.impl.PromotionCalculator;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -118,10 +119,10 @@ class PromotionEdgeCaseTest {
 
         when(promotionRepository.findActivePromotionsWithTargets(any())).thenReturn(List.of(activePromo));
         when(productRepository.findByPidWithAllDetails(1)).thenReturn(Optional.of(product));
-        when(promotionApplicabilityService.isApplicable(any(), any(), any(Boolean.class))).thenReturn(true);
-        lenient().when(promotionCalculator.calculateDiscountAmount(any(), any(), any()))
+        when(promotionApplicabilityService.isApplicable(any(CachedPromotion.class), any(), any(Boolean.class))).thenReturn(true);
+        lenient().when(promotionCalculator.calculateDiscountAmount(any(CachedPromotion.class), any(), any()))
                 .thenReturn(new BigDecimal("10"));
-        when(promotionCalculator.calculatePromotionalPrice(any(), any(), any())).thenReturn(new BigDecimal("90"));
+        when(promotionCalculator.calculatePromotionalPrice(any(), any(CachedPromotion.class), any())).thenReturn(new BigDecimal("90"));
 
         ProductResponseData result = enricherService.enrichWithPromotions(productDto);
 
@@ -147,16 +148,18 @@ class PromotionEdgeCaseTest {
         when(promotionRepository.findActivePromotionsWithTargets(any()))
                 .thenReturn(List.of(standardPromo, membershipPromo));
         when(productRepository.findByPidWithAllDetails(1)).thenReturn(Optional.of(product));
-        when(promotionApplicabilityService.isApplicable(any(), any(), any(Boolean.class))).thenReturn(true);
-        when(promotionApplicabilityService.isProductEligibleForPromotion(any(), any())).thenReturn(true);
+        when(promotionApplicabilityService.isApplicable(any(CachedPromotion.class), any(), any(Boolean.class))).thenReturn(true);
+        when(promotionApplicabilityService.isProductEligibleForPromotion(any(CachedPromotion.class), any())).thenReturn(true);
 
         // Both give $20 discount
-        when(promotionCalculator.calculateDiscountAmount(any(), any(), any())).thenReturn(new BigDecimal("20"));
-        when(promotionCalculator.calculatePromotionalPrice(any(), any(), any())).thenReturn(new BigDecimal("80"));
+        when(promotionCalculator.calculateDiscountAmount(any(CachedPromotion.class), any(), any())).thenReturn(new BigDecimal("20"));
+        when(promotionCalculator.calculatePromotionalPrice(any(), any(CachedPromotion.class), any())).thenReturn(new BigDecimal("80"));
 
-        // Mock badge text for both
-        lenient().when(promotionCalculator.generateBadgeText(standardPromo)).thenReturn("SALE");
-        lenient().when(promotionCalculator.generateBadgeText(membershipPromo)).thenReturn("GOLD+ EXCLUSIVE");
+        // Mock badge text — service passes CachedPromotion, so stub by type field
+        doAnswer(inv -> {
+            CachedPromotion cp = inv.getArgument(0);
+            return cp.type() == PromotionType.MEMBERSHIP_DISCOUNT ? "GOLD+ EXCLUSIVE" : "SALE";
+        }).when(promotionCalculator).generateBadgeText(any(CachedPromotion.class));
 
         ProductResponseData result = enricherService.enrichWithPromotions(productDto);
 
