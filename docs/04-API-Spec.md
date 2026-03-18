@@ -4,163 +4,116 @@
 
 | Item               | Detail                  |
 |--------------------|-------------------------|
-| **Document Version** | 1.0                   |
+| **Document Version** | 1.1                   |
 | **Project Name**     | FSSE2510 E-Commerce   |
-| **Base URL**         | `/api` (e.g. `http://localhost:8080/api`) |
+| **Base URL**         | `/api` (or dynamically mapped) |
 | **Authentication**   | `Authorization: Bearer <Firebase_JWT>` |
 
 ---
 
 ## 1. Public Endpoints (No Auth Required)
 
-### 1.1 Products (`/public/product`)
+### 1.1 Products
 Exposes product listing and details for guest browsing.
+* `GET /public/products` - Filter/browse products (paginated, by minimum/maximum price, keyword/sort, category/tag).
+* `GET /public/products/{idOrSlug}` - Get single product detail + promotions.
+* `GET /public/products/categories` - List categories.
+* `GET /public/products/collections` - List collections.
+* `GET /public/products/tags` - List tags.
+* `GET /public/products/category/{category}` - Paginated list isolated by category.
+* `GET /public/products/collection/{collection}` - Paginated list isolated by collection.
+* `GET /public/products/tag/{tag}` - Paginated list isolated by tag.
 
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/public/product` | Filter/browse products (paginated) | `page, minPrice, maxPrice, priceSort, dateSort, category, collection, tag` |
-| `GET` | `/public/product/{idOrSlug}` | Get single product detail + active promotions | - |
-| `GET` | `/public/product/categories` | List all predefined categories | - |
-| `GET` | `/public/product/collections`| List all predefined collections| - |
-| `GET` | `/public/product/tags` | List all predefined tags | - |
-| `GET` | `/public/product/category/{category}` | Get products by category | `page` |
-| `GET` | `/public/product/collection/{collection}` | Get products by collection | `page` |
-| `GET` | `/public/product/tag/{tag}` | Get products by tag | `page` |
+### 1.2 Checkout Utilities
+* `GET /public/coupon/validate` (requires `?code=`) - Validates a discount code for the guest environment.
+* `GET /public/promotions/active` - Lists all currently running automatic promotions.
 
-### 1.2 Checkout Utilities (`/public/coupon`, `/public/promotion`)
+### 1.3 CMS & Layout
+* `GET /public/navigation/tree` - Returns the nested Navbar items hierarchy.
+* `GET /public/showcase/collections` - Returns active homepage showcase banners/carousels.
+* `GET /public/membership/configs` - Returns the defined membership rules & mechanics.
 
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/public/coupon/{code}` | Validates a coupon code | - |
-| `GET` | `/public/promotion` | Lists all currently active promotions | - |
-
-### 1.3 CMS & Layout (`/public/navigation`, `/public/showcase`, `/public/membership`)
-
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/public/navigation/tree` | Returns the nested Navbar items | - |
-| `GET` | `/public/showcase` | Returns active homepage banners/carousels | - |
-| `GET` | `/public/membership/tier` | Returns the defined membership tiers | - |
+### 1.4 Stripe Webhook
+* `POST /webhooks/stripe` - Validates the `Stripe-Signature` and updates corresponding Transaction entity.
 
 ---
 
 ## 2. Authenticated Endpoints (`Bearer Auth`)
 
-### 2.1 User Profile (`/user`)
+### 2.1 User Profile (`/users`)
+* `GET /users/me` - Profile overview including lifetime spend, tier details.
+* `PATCH /users/profile` - Update profile data `{ "fullName", "phoneNumber", "address", "birthday" }`
 
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/user` | Get current user's profile | - |
-| `PATCH`| `/user` | Update profile info | `{ "name", "phone" }` |
-| `GET` | `/user/shippingaddress` | List saved shipping addresses | - |
-| `POST` | `/user/shippingaddress` | Create a shipping address | `{ "building", "street", "district", "city", "country", "unit", "isDefault" }` |
-| `PUT` | `/user/shippingaddress/{id}` | Update a shipping address | - |
-| `DELETE`| `/user/shippingaddress/{id}` | Remove a shipping address | - |
+### 2.2 Shipping Addresses (`/addresses`)
+* `GET /addresses` - List user's saved addresses.
+* `POST /addresses` - Create an address.
+* `PUT /addresses/{id}` - Complete overwrite.
+* `PATCH /addresses/{id}/default` - Set as primary default address.
+* `DELETE /addresses/{id}` - Remove an address block.
 
-### 2.2 Cart Management (`/cart`)
+### 2.3 Cart Management (`/cart`)
+* `GET /cart` - Returns live cart, stock check, prices.
+* `POST /cart/items/{sku}/{quantity}` - Add product variants.
+* `PUT /cart/items/{sku}/{quantity}` - Overwrite item's specific quantity.
+* `DELETE /cart/items/{sku}` - Drop variant from cart.
+* `DELETE /cart/empty` - Nuke entire cart.
 
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/cart` | Get current cart with realtime pricing | - |
-| `POST` | `/cart/{sku}/{quantity}` | Add a variant to the cart | - |
-| `PATCH`| `/cart/{sku}/{quantity}` | Update quantity of a variant | - |
-| `DELETE`| `/cart/{sku}` | Remove a variant from the cart | - |
-| `DELETE`| `/cart/empty` | Empty the entire cart | - |
+### 2.4 Transactions & Checkout (`/transactions`)
+* `GET /transactions` - Auth user's order history.
+* `GET /transactions/{id}` - Auth user's specific invoice.
+* `POST /transactions/prepare` - Convert cart into a staging checkout (Calculates coupons + DB deductions).
+* `PATCH /transactions/{id}/payment` - Initialize Stripe Payment Intent against the prepared ID.
+* `PATCH /transactions/{transactionId}/success` - (Fallback webhook) marks transition to success.
 
-### 2.3 Transactions & Checkout (`/transaction`)
-
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/transaction` | Get authenticated user's order history | `page` |
-| `GET` | `/transaction/{id}` | Get specific transaction details | - |
-| `POST` | `/transaction/prepare` | Convert cart to PENDING transaction | `{ "shippingAddressId", "couponCode" }` |
-| `PATCH`| `/transaction/{id}/pay` | Initialize Stripe Payment Intent | Returns `{ "clientSecret" }` |
-| `PATCH`| `/transaction/{transactionId}/success` | Fallback manually set success (if webhook missed) | - |
-
-### 2.4 Wishlist (`/api/wishlist`)
-
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `GET` | `/wishlist` | Get user's liked products | - |
-| `POST` | `/wishlist/{productId}` | Toggle product in wishlist | - |
+### 2.5 Wishlist (`/api/wishlist`)
+* `GET /api/wishlist` - Auth user's liked product list.
+* `POST /api/wishlist/{pid}` - Toggle favorite on product id.
+* `DELETE /api/wishlist/{pid}` - Remove favorite.
 
 ---
 
 ## 3. Admin Endpoints (`Bearer + ROLE_ADMIN`)
 
-### 3.1 Product Admin (`/admin/product`)
+### 3.1 Product/Inventory Admin (`/admin/products`)
+* `POST /admin/products` - Create product record.
+* `PUT /admin/products/{productId}` - Overwrite/Update all basic fields.
+* `DELETE /admin/products/{productId}` - De-list a product item.
+* `POST /admin/products/{productId}/variants` - Setup SKU variables/stocks.
+* `PATCH /admin/products/{productId}/variants/{sku}` - Sync real-time stocks.
 
-| Method | Endpoint | Description | Query Params / Body |
-|--------|----------|-------------|---------------------|
-| `POST` | `/admin/product` | Create a new product | Full `ProductDetailsDto` |
-| `PATCH`| `/admin/product/{productId}` | Update metadata / un-delete | - |
-| `DELETE`| `/admin/product/{productId}` | Soft-delete product | - |
-| `POST` | `/admin/product/{productId}/variant` | Add variant | `{ "sku", "price", "stock", "size" }` |
-| `PATCH`| `/admin/product/{productId}/variant/{sku}` | Update variant price/stock | - |
+### 3.2 Users Admin (`/admin/users`)
+* `GET /admin/users` - Master list of registered users.
+* `GET /admin/users/search` - Look up user by explicit FirebaseUid or Email.
+* `POST /admin/users/set-role` - Grant root access to a specific account (`uid`, `role`).
 
-### 3.2 CMS Admin
+### 3.3 Transaction Admin (`/admin/transactions`)
+* `GET /admin/transactions` - Monitor order volume.
+* `PATCH /admin/transactions/{id}/status` - Override transaction states manually (`PREPARE`, `SUCCESS`).
 
-| Method | Endpoint | Description | Target Mod |
-|--------|----------|-------------|------------|
-| `POST` | `/admin/navigation/item` | Create a Navbar link | Navigation |
-| `POST` | `/admin/navigation/init` | Seed default layout | Navigation |
-| `POST` | `/admin/showcase` | Create a homepage banner | Showcase |
-| `DELETE`| `/admin/showcase/{id}` | Remove banner | Showcase |
+### 3.4 Showcase / CMS Admin (`/api/admin/showcase/collections`)
+* `GET /api/admin/showcase/collections` - Overview of banner sequences.
+* `POST /api/admin/showcase/collections` - Adds new block.
+* `PUT /api/admin/showcase/collections/{id}` - Replaces banner block data.
+* `DELETE /api/admin/showcase/collections/{id}` - Prune banner element.
 
-### 3.3 Marketing Admin
-
-| Method | Endpoint | Description | Group |
-|--------|----------|-------------|-------|
-| `POST` | `/admin/coupon` | Create promo code | Coupons |
-| `DELETE`| `/admin/coupon/{code}` | Delete promo code | Coupons |
-| `POST` | `/admin/promotion` | Create active promotion rules | Promotions |
-| `POST` | `/admin/promotion/{promotionId}/products/{productId}` | Link promotion to product | Promotions |
-| `GET` | `/admin/membership/tier` | List tier rules | General Settings |
-
-### 3.4 User & Order Management
-
-| Method | Endpoint | Description | Group |
-|--------|----------|-------------|-------|
-| `GET` | `/admin/user` | List all users (paginated) | Users |
-| `GET` | `/admin/transaction` | List all orders (paginated) | Orders |
-| `PATCH`| `/admin/transaction/{id}/status` | Manually update order status | Orders |
-| `PATCH`| `/admin/user/{uid}/admin` | Grant a user `ROLE_ADMIN` | Users |
+### 3.5 Marketing Admin (`/admin/promotions`, `/admin/coupons`, `/admin/membership`)
+* `POST /admin/promotions` - Mount new global/conditional promos.
+* `PATCH /admin/promotions/{promoId}/assign/{pid}` - Bond an exclusive product to a promotional scope.
+* `GET /admin/promotions`, `GET /admin/promotions/{id}` - Fetch live settings.
+* `PUT /admin/promotions/{id}`, `DELETE /admin/promotions/{id}` - Alter mechanics.
+* `GET /admin/coupons`, `POST /admin/coupons`, `DELETE /admin/coupons/{code}` - Maintain tracking keys for %/$$ off coupons.
+* `GET /admin/membership/configs`, `POST /admin/membership/configs` - Control threshold mappings for tiers.
 
 ---
 
-## 4. Webhook Endpoints
+## 5. Standard Error DTO Example
 
-| Method | Endpoint | Source | Description |
-|--------|----------|--------|-------------|
-| `POST` | `/webhook/stripe` | Stripe API | Triggered on *checkout.session.completed* or *payment_intent.succeeded*. Secures with `Stripe-Signature` and raw body validation. Updates local Transaction status to `SUCCESS`. |
-
----
-
-## 5. DTO Standard Conventions
-
-Success Response (`200 OK`):
-```json
-{
-  "cartItems": [
-    {
-      "sku": "A1B2",
-      "name": "Testing Product",
-      "price": 100.00,
-      "quantity": 2,
-      "subtotal": 200.00
-    }
-  ],
-  "total": 200.00
-}
-```
-
-Error Response (`4xx / 5xx`):
 ```json
 {
   "timestamp": "2026-03-18T12:00:00Z",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Stock not enough for item: A1B2, Stock available: 1",
-  "path": "/api/cart/A1B2/2"
+  "status": 404,
+  "error": "Not Found",
+  "message": "ProductEntity with pid 9999 not found",
+  "path": "/api/public/products/9999"
 }
 ```

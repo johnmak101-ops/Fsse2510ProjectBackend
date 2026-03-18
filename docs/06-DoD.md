@@ -10,7 +10,7 @@
 ---
 
 ## 1. Introduction
-The Definition of Done (DoD) establishes the quality and completeness standards that every user story or feature must meet before it is considered "Finished" and ready for production deployment.
+The FSSE2510 E-Commerce Backend is a **One-Man Project**. The Definition of Done (DoD) is tailored for pragmatic, rapid execution while maintaining essential quality. It establishes the baseline standards that a feature should meet (like basic logic testing and manual verification) without the heavy bureaucracy of enterprise-level constraints (e.g. strict 80% coverage enforcement is NOT required).
 
 ---
 
