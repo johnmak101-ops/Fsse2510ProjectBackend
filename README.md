@@ -132,14 +132,11 @@ All documentation is available in the [`docs/`](./docs) directory, viewable dire
 
 | Diagram | Description |
 |---------|-------------|
-| [🖼️ ER Diagram](./docs/diagrams/ER%20Diagram.svg) | Full entity-relationship diagram of the database |
-| [🖼️ Add Cart to Finish Transaction](./docs/diagrams/AddCartToFinishTransactionLogicFlow.svg) | Cart-to-checkout business logic flowchart |
-| [🖼️ Cart Promotion Enricher](./docs/diagrams/CartPromotionEnricherService.svg) | Promotion/coupon application service flow |
-| [🖼️ Checkout & Transaction Flow](./docs/diagrams/Checkout%20%26%20Transaction%20Flow%20(Sequence%20Diagram).svg) | Checkout sequence diagram with Stripe |
-| [🖼️ Discount Distribution (Penny Problem)](./docs/diagrams/Discount%20Distribution%20Flow(PennyProblem).svg) | Penny-rounding discount distribution logic |
-| [🖼️ Firebase User Sync](./docs/diagrams/Firebase%20User%20Synchronization%20(Sequence%20Diagram).svg) | Firebase auth user synchronization flow |
-| [🖼️ Membership State Machine](./docs/diagrams/Membership%20State%20Machine%20(Flowchart).svg) | Membership tier state transitions |
-| [🖼️ Product Search Performance](./docs/diagrams/Product%20Search%20Performance%20Pattern%20(Sequence%20Diagram).svg) | Two-step fetch performance pattern |
+| [📊 ER Diagram](./docs/diagrams/ER_DIAGRAM.md) | Full entity-relationship diagram with 17 entities and all relationships |
+| [📊 Checkout & Transaction Flow](./docs/diagrams/CHECKOUT_TRANSACTION_FLOW.md) | End-to-end checkout: create → prepare → Stripe → finish + state machine |
+| [📊 Membership State Machine](./docs/diagrams/MEMBERSHIP_STATE_MACHINE.md) | Tier hierarchy, upgrade/downgrade/grace period evaluation logic |
+| [📊 Cart Promotion Enricher](./docs/diagrams/CART_PROMOTION_ENRICHER.md) | Promotion applicability pipeline + penny-rounding discount distribution |
+| [📊 Firebase User Sync](./docs/diagrams/FIREBASE_USER_SYNC.md) | Firebase auth → user auto-creation sequence + security filter chain |
 
 ---
 
